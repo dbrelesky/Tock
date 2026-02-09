@@ -110,3 +110,194 @@ Parts as rows, requirements as columns. Shows which parts satisfy which requirem
 | **A6** Dark shell | | | | ✅ | | | | | ✅ | | | | | | | | |
 | **A7** Admin panel | | | | | | | ✅ | ✅ | | ✅ | ✅ | ✅ | | | | | |
 | **A8** Power-on cascade | | | | | ✅ | | | | | | | | | | | | ✅ |
+
+---
+
+## Detail A: Breadboard
+
+### Places
+
+| # | Place | Description |
+|---|-------|-------------|
+| P1 | Clock Display | Main view — primary NYC clock centered top, secondary city clocks below |
+| P2 | Admin Panel | Hidden overlay/drawer — seconds toggle, city management |
+
+### UI Affordances
+
+| # | Place | Component | Affordance | Control | Wires Out | Returns To |
+|---|-------|-----------|------------|---------|-----------|------------|
+| U1 | P1 | primary-clock | time digits (HH:MM:SS) | render | — | — |
+| U2 | P1 | primary-clock | AM/PM flap pair | render | — | — |
+| U3 | P1 | primary-clock | city label "NEW YORK" | render | — | — |
+| U4 | P1 | primary-clock | colon separators | render | — | — |
+| U5 | P1 | secondary-clock | time digits (HH:MM) | render | — | — |
+| U6 | P1 | secondary-clock | AM/PM flap pair | render | — | — |
+| U7 | P1 | secondary-clock | city label (ALL CAPS) | render | — | — |
+| U8 | P1 | secondary-clock | day-of-week badge (e.g., "TUE") | render | — | — |
+| U9 | P1 | shell | admin trigger (gear icon, corner) | click | → P2 | — |
+| U10 | P2 | admin-panel | seconds toggle switch | click | → N12 | — |
+| U11 | P2 | admin-panel | city list (existing cities) | render | — | — |
+| U12 | P2 | admin-panel | remove city button (per row) | click | → N13 | — |
+| U13 | P2 | admin-panel | city name input | type | — | — |
+| U14 | P2 | admin-panel | timezone selector | select | — | — |
+| U15 | P2 | admin-panel | add city button | click | → N14 | — |
+| U16 | P2 | admin-panel | close button | click | → P1 | — |
+
+### Code Affordances
+
+| # | Place | Component | Affordance | Control | Wires Out | Returns To |
+|---|-------|-----------|------------|---------|-----------|------------|
+| N1 | P1 | app | `init()` | call | → N2, → N3, → N7, → N8 | — |
+| N2 | P1 | app | `loadSettings()` | call | — | → S1, → S2 |
+| N3 | P1 | app | `renderClocks()` | call | → U1, → U2, → U3, → U4, → U5, → U6, → U7 | — |
+| N4 | P1 | clock-assembly | `getTimeForZone(tz)` | call | — | → N5 |
+| N5 | P1 | clock-assembly | `diffDigits(prev, current)` | call | → N6 | — |
+| N6 | P1 | flap-digit | `triggerFlip(el, old, new)` | call | → U1, → U5 | — |
+| N7 | P1 | app | `powerOnCascade()` | call | → N6 | — |
+| N8 | P1 | app | `startTickLoop()` | call | → N9 | — |
+| N9 | P1 | tick-loop | `setInterval(1000)` | timer | → N4, → N10 | — |
+| N10 | P1 | secondary-clock | `getDayOffset(cityTz)` | call | — | → U8 |
+| N11 | P1 | clock-assembly | `prevDigits` | store | — | → N5 |
+| N12 | P2 | admin-panel | `toggleSeconds(bool)` | call | → S2, → N3 | — |
+| N13 | P2 | admin-panel | `removeCity(index)` | call | → S1, → N3 | — |
+| N14 | P2 | admin-panel | `addCity(name, tz)` | call | → S1, → N3 | — |
+
+### Data Stores
+
+| # | Place | Store | Description |
+|---|-------|-------|-------------|
+| S1 | P1 | `localStorage:cityList` | Array of `{name, timezone}` — persists across reloads. Defaults: Nashville, LA, Auckland, Tel Aviv |
+| S2 | P1 | `localStorage:showSeconds` | Boolean — persists across reloads. Default: true |
+
+### Wiring Narrative
+
+**Init flow (page load):**
+N1 `init()` → N2 `loadSettings()` reads S1 + S2 → N3 `renderClocks()` builds DOM for primary + all secondary clocks → N7 `powerOnCascade()` stagger-flips all digits from blank with 30–80ms offsets → N8 `startTickLoop()` begins the interval.
+
+**Tick flow (every second):**
+N9 `setInterval` fires → for each clock: N4 `getTimeForZone(tz)` returns `{h, m, s, period, weekday}` → N5 `diffDigits()` compares against N11 `prevDigits` → for each changed digit: N6 `triggerFlip()` runs CSS animation → updates U1 or U5. For secondary clocks: N10 `getDayOffset()` compares city weekday vs NYC → updates U8 if different.
+
+**Admin — toggle seconds:**
+U10 click → N12 `toggleSeconds()` → writes S2, calls N3 `renderClocks()` to show/hide seconds flaps on primary.
+
+**Admin — remove city:**
+U12 click → N13 `removeCity()` → writes S1, calls N3 `renderClocks()` to rebuild secondary row.
+
+**Admin — add city:**
+U13 type name, U14 select timezone, U15 click → N14 `addCity()` → writes S1, calls N3 `renderClocks()` to rebuild secondary row.
+
+### Breadboard Diagram
+
+```mermaid
+flowchart TB
+    subgraph P1["P1: Clock Display"]
+        subgraph primaryClock["primary-clock"]
+            U3["U3: city label NEW YORK"]
+            U1["U1: time digits HH:MM:SS"]
+            U4["U4: colon separators"]
+            U2["U2: AM/PM"]
+        end
+
+        subgraph secondaryClock["secondary-clock (×N)"]
+            U7["U7: city label ALL CAPS"]
+            U8["U8: day-of-week badge"]
+            U5["U5: time digits HH:MM"]
+            U6["U6: AM/PM"]
+        end
+
+        U9["U9: admin trigger"]
+
+        N1["N1: init()"]
+        N2["N2: loadSettings()"]
+        N3["N3: renderClocks()"]
+        N7["N7: powerOnCascade()"]
+        N8["N8: startTickLoop()"]
+        N9["N9: setInterval(1000)"]
+        N4["N4: getTimeForZone(tz)"]
+        N5["N5: diffDigits()"]
+        N6["N6: triggerFlip()"]
+        N10["N10: getDayOffset()"]
+        N11["N11: prevDigits"]
+    end
+
+    subgraph P2["P2: Admin Panel"]
+        U10["U10: seconds toggle"]
+        U11["U11: city list"]
+        U12["U12: remove city btn"]
+        U13["U13: city name input"]
+        U14["U14: timezone selector"]
+        U15["U15: add city btn"]
+        U16["U16: close btn"]
+
+        N12["N12: toggleSeconds()"]
+        N13["N13: removeCity()"]
+        N14["N14: addCity()"]
+    end
+
+    subgraph stores["DATA STORES"]
+        S1["S1: localStorage:cityList"]
+        S2["S2: localStorage:showSeconds"]
+    end
+
+    %% Init flow
+    N1 --> N2
+    N1 --> N3
+    N1 --> N7
+    N1 --> N8
+    N2 -.-> S1
+    N2 -.-> S2
+
+    %% Render flow
+    N3 --> U1
+    N3 --> U2
+    N3 --> U3
+    N3 --> U4
+    N3 --> U5
+    N3 --> U6
+    N3 --> U7
+
+    %% Power-on
+    N7 --> N6
+
+    %% Tick flow
+    N8 --> N9
+    N9 --> N4
+    N9 --> N10
+    N4 -.-> N5
+    N11 -.-> N5
+    N5 --> N6
+    N6 --> U1
+    N6 --> U5
+    N10 -.-> U8
+
+    %% Navigation
+    U9 --> P2
+    U16 --> P1
+
+    %% Admin actions
+    U10 --> N12
+    U12 --> N13
+    U15 --> N14
+    N12 --> S2
+    N12 --> N3
+    N13 --> S1
+    N13 --> N3
+    N14 --> S1
+    N14 --> N3
+    S1 -.-> U11
+
+    classDef ui fill:#ffb6c1,stroke:#d87093,color:#000
+    classDef nonui fill:#d3d3d3,stroke:#808080,color:#000
+    classDef store fill:#e6e6fa,stroke:#9370db,color:#000
+
+    class U1,U2,U3,U4,U5,U6,U7,U8,U9,U10,U11,U12,U13,U14,U15,U16 ui
+    class N1,N2,N3,N4,N5,N6,N7,N8,N9,N10,N11,N12,N13,N14 nonui
+    class S1,S2 store
+```
+
+**Legend:**
+- **Pink nodes (U)** = UI affordances (things users see/interact with)
+- **Grey nodes (N)** = Code affordances (methods, stores, timers)
+- **Lavender nodes (S)** = Data stores (localStorage)
+- **Solid lines** = Wires Out (calls, triggers, writes)
+- **Dashed lines** = Returns To (reads, return values)
