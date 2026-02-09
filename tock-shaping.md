@@ -26,18 +26,22 @@
 | ID | Requirement | Status |
 |----|-------------|--------|
 | R0 | NYC time displayed prominently as the primary clock | Core goal |
-| R1 | 🟡 Secondary clocks for configurable cities visible below primary (default: Nashville, Los Angeles, Auckland, Tel Aviv) | Core goal |
+| R1 | Secondary clocks for configurable cities visible below primary (default: Nashville, Los Angeles, Auckland, Tel Aviv) | Core goal |
 | R2 | All clocks update in real-time — stay current to the second | Must-have |
 | R3 | Dark theme throughout | Must-have |
 | R4 | Split-flap / flip-board animation aesthetic (airport terminal style) | Must-have |
 | R5 | Flip animation uses physically accurate motion: gravity-driven hinge, acceleration, overshoot, snap settle | Must-have |
-| R6 | 🟡 Seconds display on primary clock can be toggled off via admin area | Must-have |
-| R7 | 🟡 Admin area is hidden from the main clock view — does not disrupt the display | Must-have |
+| R6 | Seconds display on primary clock can be toggled off via admin area | Must-have |
+| R7 | Admin area is hidden from the main clock view — does not disrupt the display | Must-have |
 | R8 | Fast to load — minimal dependencies, quick to first render | Must-have |
-| R9 | 🟡 Can add new city/timezone from admin area | Must-have |
-| R10 | 🟡 Can remove a city/timezone from admin area | Must-have |
-| R11 | 🟡 City list persists across page reloads (localStorage) | Must-have |
-| R12 | 🟡 No more than ~6 secondary locations expected at a time | Nice-to-have |
+| R9 | Can add new city/timezone from admin area | Must-have |
+| R10 | Can remove a city/timezone from admin area | Must-have |
+| R11 | City list persists across page reloads (localStorage) | Must-have |
+| R12 | No more than ~6 secondary locations expected at a time | Nice-to-have |
+| R13 | 🟡 12-hour format with AM/PM indicator | Must-have |
+| R14 | 🟡 Day-of-week shown for cities where the date differs from NYC (e.g., Auckland showing "TUE") | Must-have |
+| R15 | 🟡 City labels displayed in ALL CAPS | Must-have |
+| R16 | 🟡 Power-on cascade animation on page load/refresh — flaps flip into place as if the board is starting up | Must-have |
 
 ---
 
@@ -48,12 +52,13 @@
 | Part | Mechanism | Flag |
 |------|-----------|:----:|
 | **A1** | 🟡 **Flap digit** — four-layer DOM per character: two static halves (new char top, old char bottom) + two animated flaps. Top flap (old char top half) hinges at bottom edge (`transform-origin: 50% 100%`), rotates `0° → -90°` with `ease-in` timing (gravity acceleration). Bottom flap (new char bottom half) hinges at top edge (`transform-origin: 50% 0%`), rotates `90° → 0°` via multi-stage `@keyframes`: 70% → overshoot -3°, 85% → bounce-back 1.5°, 100% → settle at 0°. Container has `perspective: 300–500px`. Both flaps use `backface-visibility: hidden`. Hinge gap is 2px dark line. Cast shadow animates on bottom-static during flip. Duration ~300ms, bottom flap delayed 40–50%. See `spike-flip-physics.md`. | |
-| **A2** | **Clock assembly** — groups flap digits into `HH : MM (: SS)`. Colon separators styled as fixed flap cards. Each assembly takes a `timeZone` string (IANA) and a `showSeconds` boolean. Uses `Intl.DateTimeFormat` with `timeZone` option to derive current h/m/s. Registers a tick callback (see A5) that updates only the digits that changed. | |
-| **A3** | **Primary NYC display** — large clock assembly (`timeZone: 'America/New_York'`), city label "NEW YORK" above or below in a terminal-style font. | |
-| **A4** | 🟡 **Secondary clocks row** — smaller clock assemblies in a row/grid below primary, rendered from a dynamic city list. Each shows city label + time (no seconds). Default cities: Nashville `America/Chicago`, Los Angeles `America/Los_Angeles`, Auckland `Pacific/Auckland`, Tel Aviv `Asia/Jerusalem`. List is read from localStorage on load; falls back to defaults if empty. | |
+| **A2** | 🟡 **Clock assembly** — groups flap digits into `HH : MM (: SS)` in 12-hour format. AM/PM indicator rendered as a smaller flap pair or static label beside the time. Colon separators styled as fixed flap cards. Each assembly takes a `timeZone` string (IANA) and a `showSeconds` boolean. Uses `Intl.DateTimeFormat` with `hour12: true` and `timeZone` option to derive current h/m/s/period. Registers a tick callback (see A5) that updates only the digits that changed. | |
+| **A3** | 🟡 **Primary NYC display** — large clock assembly (`timeZone: 'America/New_York'`), city label "NEW YORK" in ALL CAPS above or below in a terminal-style font. | |
+| **A4** | 🟡 **Secondary clocks row** — smaller clock assemblies in a row/grid below primary, rendered from a dynamic city list. Each shows ALL CAPS city label + time (no seconds). Cities whose current date differs from NYC show a day-of-week abbreviation (e.g., "TUE") next to the city label. Day offset computed by comparing `Intl.DateTimeFormat` weekday for the city vs NYC each tick. Default cities: Nashville `America/Chicago`, Los Angeles `America/Los_Angeles`, Auckland `Pacific/Auckland`, Tel Aviv `Asia/Jerusalem`. List is read from localStorage on load; falls back to defaults if empty. | |
 | **A5** | **Tick loop** — single `setInterval(1000)` drives all clock assemblies. Each tick, every assembly reads current time for its timezone via `Intl.DateTimeFormat`, diffs against previous digits, and triggers flap animations only on changed digits. No per-clock timers. | |
 | **A6** | **Dark shell** — dark background (`#1a1a1a` or similar), minimal page chrome, monospace/terminal font (e.g., system mono or a web-safe equivalent to keep load fast). Layout: primary clock centered top, secondary clocks row centered below with even spacing. Responsive: stacks vertically on narrow screens. | |
-| **A7** | 🟡 **Admin panel** — hidden drawer/overlay toggled by a subtle trigger (e.g., gear icon in corner, or tap a hidden hotspot). Contains: (1) seconds toggle for primary clock, (2) city list with remove buttons, (3) add-city input (city name + IANA timezone picker or autocomplete). Changes persist to localStorage immediately. Panel slides in/out without disrupting clock layout. | |
+| **A7** | **Admin panel** — hidden drawer/overlay toggled by a subtle trigger (e.g., gear icon in corner, or tap a hidden hotspot). Contains: (1) seconds toggle for primary clock, (2) city list with remove buttons, (3) add-city input (city name + IANA timezone picker or autocomplete). Changes persist to localStorage immediately. Panel slides in/out without disrupting clock layout. | |
+| **A8** | 🟡 **Power-on cascade** — on page load/refresh, all flap digits start blank and flip into their current values with a staggered delay (left-to-right, primary clock first, then secondary clocks). Each digit triggers its flip animation with a 30–80ms offset from the previous, simulating a Solari board powering on. Runs once on init, then normal tick loop takes over. | |
 
 ---
 
@@ -62,24 +67,32 @@
 | Req | Requirement | Status | A |
 |-----|-------------|--------|---|
 | R0 | NYC time displayed prominently as the primary clock | Core goal | ✅ |
-| R1 | 🟡 Secondary clocks for configurable cities visible below primary (default: Nashville, Los Angeles, Auckland, Tel Aviv) | Core goal | ✅ |
+| R1 | Secondary clocks for configurable cities visible below primary (default: Nashville, Los Angeles, Auckland, Tel Aviv) | Core goal | ✅ |
 | R2 | All clocks update in real-time — stay current to the second | Must-have | ✅ |
 | R3 | Dark theme throughout | Must-have | ✅ |
 | R4 | Split-flap / flip-board animation aesthetic (airport terminal style) | Must-have | ✅ |
-| R5 | Flip animation uses physically accurate motion: gravity-driven hinge, acceleration, overshoot, snap settle | Must-have | 🟡 ✅ |
-| R6 | 🟡 Seconds display on primary clock can be toggled off via admin area | Must-have | ✅ |
-| R7 | 🟡 Admin area is hidden from the main clock view — does not disrupt the display | Must-have | ✅ |
+| R5 | Flip animation uses physically accurate motion: gravity-driven hinge, acceleration, overshoot, snap settle | Must-have | ✅ |
+| R6 | Seconds display on primary clock can be toggled off via admin area | Must-have | ✅ |
+| R7 | Admin area is hidden from the main clock view — does not disrupt the display | Must-have | ✅ |
 | R8 | Fast to load — minimal dependencies, quick to first render | Must-have | ✅ |
-| R9 | 🟡 Can add new city/timezone from admin area | Must-have | ✅ |
-| R10 | 🟡 Can remove a city/timezone from admin area | Must-have | ✅ |
-| R11 | 🟡 City list persists across page reloads (localStorage) | Must-have | ✅ |
-| R12 | 🟡 No more than ~6 secondary locations expected at a time | Nice-to-have | ✅ |
+| R9 | Can add new city/timezone from admin area | Must-have | ✅ |
+| R10 | Can remove a city/timezone from admin area | Must-have | ✅ |
+| R11 | City list persists across page reloads (localStorage) | Must-have | ✅ |
+| R12 | No more than ~6 secondary locations expected at a time | Nice-to-have | ✅ |
+| R13 | 🟡 12-hour format with AM/PM indicator | Must-have | ✅ |
+| R14 | 🟡 Day-of-week shown for cities where the date differs from NYC (e.g., Auckland showing "TUE") | Must-have | ✅ |
+| R15 | 🟡 City labels displayed in ALL CAPS | Must-have | ✅ |
+| R16 | 🟡 Power-on cascade animation on page load/refresh — flaps flip into place as if the board is starting up | Must-have | ✅ |
 
 **Notes:**
-- 🟡 R5 now passes: A1 spike resolved. Mechanism is multi-stage CSS `@keyframes` with gravity `ease-in` on top flap, overshoot/bounce keyframes on bottom flap. See `spike-flip-physics.md`.
+- R5 resolved via A1 spike. See `spike-flip-physics.md`.
 - R6, R7, R9, R10 satisfied by A7 (admin panel).
 - R11 satisfied by A4 reading from localStorage + A7 writing to it.
 - R12 is a soft constraint — layout in A4 handles up to ~6 naturally in a row/grid.
+- 🟡 R13 satisfied by A2 (clock assembly uses `hour12: true`, renders AM/PM flap pair).
+- 🟡 R14 satisfied by A4 (compares weekday of city vs NYC, shows day abbreviation when different).
+- 🟡 R15 satisfied by A3 and A4 (ALL CAPS city labels).
+- 🟡 R16 satisfied by A8 (power-on cascade with staggered flap init).
 
 ---
 
@@ -87,12 +100,13 @@
 
 Parts as rows, requirements as columns. Shows which parts satisfy which requirements.
 
-| Part | R0 NYC primary | R1 Config cities | R2 Real-time | R3 Dark | R4 Flip aesthetic | R5 Flip physics | R6 Seconds toggle | R7 Hidden admin | R8 Fast load | R9 Add city | R10 Remove city | R11 Persist | R12 ~6 max |
-|------|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| **A1** Flap digit | | | | | ✅ | ✅ | | | | | | | |
-| **A2** Clock assembly | | | ✅ | | ✅ | | | | | | | | |
-| **A3** Primary NYC | ✅ | | | | | | | | | | | | |
-| **A4** Secondary row | | ✅ | | | | | | | | | | ✅ | ✅ |
-| **A5** Tick loop | | | ✅ | | | | | | ✅ | | | | |
-| **A6** Dark shell | | | | ✅ | | | | | ✅ | | | | |
-| **A7** Admin panel | | | | | | | ✅ | ✅ | | ✅ | ✅ | ✅ | |
+| Part | R0 | R1 | R2 | R3 | R4 | R5 | R6 | R7 | R8 | R9 | R10 | R11 | R12 | R13 | R14 | R15 | R16 |
+|------|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| **A1** Flap digit | | | | | ✅ | ✅ | | | | | | | | | | | |
+| **A2** Clock assembly | | | ✅ | | ✅ | | | | | | | | | ✅ | | | |
+| **A3** Primary NYC | ✅ | | | | | | | | | | | | | | | ✅ | |
+| **A4** Secondary row | | ✅ | | | | | | | | | | ✅ | ✅ | | ✅ | ✅ | |
+| **A5** Tick loop | | | ✅ | | | | | | ✅ | | | | | | | | |
+| **A6** Dark shell | | | | ✅ | | | | | ✅ | | | | | | | | |
+| **A7** Admin panel | | | | | | | ✅ | ✅ | | ✅ | ✅ | ✅ | | | | | |
+| **A8** Power-on cascade | | | | | ✅ | | | | | | | | | | | | ✅ |
