@@ -28,6 +28,7 @@ body {
   font-weight: 600;
   letter-spacing: 0.2em;
   text-transform: uppercase;
+  opacity: 0.6;
 }
 
 .clock-digits {
@@ -53,6 +54,7 @@ body {
   align-self: flex-end;
   padding-bottom: 4px;
   letter-spacing: 0.05em;
+  opacity: 0.6;
 }
 
 /* ── Flap cell ── */
@@ -71,6 +73,12 @@ body {
   height: var(--flap-height);
   perspective: 400px;
   border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+/* Impact shadow — pulses on each bounce hit */
+.flap-cell.rattle-settle.flipping {
+  animation: impact-shadow 600ms ease-out 80ms forwards;
 }
 
 /* ── Shared half-panel style ── */
@@ -198,6 +206,46 @@ body {
   100% { transform: rotateX(0deg); }    /* settle */
 }
 
+/* ── Rattle-settle overrides (initial load only) ── */
+.flap-cell.flipping.rattle-settle .top-flap {
+  animation: flip-top-hard 200ms ease-in forwards;
+}
+
+.flap-cell.flipping.rattle-settle .bottom-flap {
+  animation: flip-bottom-hard 600ms cubic-bezier(0.22, 1, 0.36, 1) 80ms forwards;
+}
+
+/* Top flap snaps down fast */
+@keyframes flip-top-hard {
+  0%   { transform: rotateX(0deg); }
+  100% { transform: rotateX(-90deg); }
+}
+
+/* Bottom flap slams down — 2 full bounces + half bounce → settle */
+@keyframes flip-bottom-hard {
+  0%   { transform: rotateX(90deg); }
+  28%  { transform: rotateX(-14deg); }  /* 1st slam — hard overshoot */
+  40%  { transform: rotateX(8deg); }    /* 1st bounce back up */
+  52%  { transform: rotateX(-12deg); }  /* 2nd slam — nearly as hard */
+  62%  { transform: rotateX(6deg); }    /* 2nd bounce back up */
+  74%  { transform: rotateX(-5deg); }   /* 3rd hit — half bounce */
+  84%  { transform: rotateX(1.5deg); }  /* tiny lift */
+  93%  { transform: rotateX(-0.4deg); } /* micro wobble */
+  100% { transform: rotateX(0deg); }    /* settle */
+}
+
+/* Shadow pulses on each bounce hit then settles */
+@keyframes impact-shadow {
+  0%   { box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4); }
+  28%  { box-shadow: 0 6px 20px rgba(0, 0, 0, 0.7), 0 2px 8px rgba(0, 0, 0, 0.5); }  /* 1st hit */
+  40%  { box-shadow: 0 3px 6px rgba(0, 0, 0, 0.4); }   /* lift */
+  52%  { box-shadow: 0 5px 16px rgba(0, 0, 0, 0.65), 0 2px 6px rgba(0, 0, 0, 0.45); } /* 2nd hit */
+  62%  { box-shadow: 0 3px 6px rgba(0, 0, 0, 0.4); }   /* lift */
+  74%  { box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5), 0 1px 4px rgba(0, 0, 0, 0.4); }  /* 3rd hit */
+  84%  { box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4); }   /* fading */
+  100% { box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4); }   /* rest */
+}
+
 /* Shadow cast on lower half by the falling flap */
 @keyframes cast-shadow {
   0%   { opacity: 0; }
@@ -271,6 +319,7 @@ body {
   border-radius: 2px;
   letter-spacing: 0.05em;
   font-family: "SF Mono", "Menlo", "Consolas", "Liberation Mono", monospace;
+  opacity: 0.6;
 }
 
 /* ── Responsive: stack secondary on narrow screens ── */

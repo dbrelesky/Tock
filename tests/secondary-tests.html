@@ -324,6 +324,166 @@
         }
       });
     });
+
+    // ── Rattle constants ──
+    section("rattle constants");
+
+    test("RATTLE_CHARS contains digits 0-9", () => {
+      assertEqual(RATTLE_CHARS, "0123456789", "RATTLE_CHARS");
+    });
+
+    test("RATTLE_INTERVALS is an array of increasing delays", () => {
+      assert(Array.isArray(RATTLE_INTERVALS), "should be array");
+      assert(RATTLE_INTERVALS.length > 0, "should not be empty");
+      for (let i = 1; i < RATTLE_INTERVALS.length; i++) {
+        assert(RATTLE_INTERVALS[i] >= RATTLE_INTERVALS[i - 1],
+          `interval[${i}] (${RATTLE_INTERVALS[i]}) should be >= interval[${i-1}] (${RATTLE_INTERVALS[i-1]})`);
+      }
+    });
+
+    // ── rattleCell ──
+    section("rattleCell");
+
+    test("rattleCell returns a promise", () => {
+      const container = document.getElementById("secondary-container");
+      container.innerHTML = "";
+      const result = renderSecondaryClock(container, { name: "TEST", tz: "America/Chicago" });
+      const cell = result.cells[0];
+      const p = rattleCell(cell, "5");
+      assert(p && typeof p.then === "function", "should return a promise");
+      // Wait for rattle intervals to complete, then fire animationend
+      const totalDelay = RATTLE_INTERVALS.reduce((a, b) => a + b, 0);
+      return delay(totalDelay + 50).then(() => {
+        cell.querySelector(".bottom-flap").dispatchEvent(new Event("animationend"));
+        return p;
+      });
+    });
+
+    test("rattleCell lands on target character after animationend", () => {
+      const container = document.getElementById("secondary-container");
+      container.innerHTML = "";
+      const result = renderSecondaryClock(container, { name: "TEST", tz: "America/Chicago" });
+      const cell = result.cells[0];
+      const p = rattleCell(cell, "7");
+      const totalDelay = RATTLE_INTERVALS.reduce((a, b) => a + b, 0);
+      return delay(totalDelay + 50).then(() => {
+        // Cell should be flipping (triggerFlip was called)
+        assertEqual(cell.dataset.flipping, "true", "should be flipping");
+        // rattle-settle class should be present
+        assert(cell.classList.contains("rattle-settle"), "should have rattle-settle class");
+        cell.querySelector(".bottom-flap").dispatchEvent(new Event("animationend"));
+        return p;
+      }).then(() => {
+        assertEqual(cell.querySelector(".top-static span").textContent, "7", "top-static should be target");
+        assertEqual(cell.querySelector(".bottom-static span").textContent, "7", "bottom-static should be target");
+      });
+    });
+
+    test("rattleCell removes rattle-settle class after animationend", () => {
+      const container = document.getElementById("secondary-container");
+      container.innerHTML = "";
+      const result = renderSecondaryClock(container, { name: "TEST", tz: "America/Chicago" });
+      const cell = result.cells[0];
+      const p = rattleCell(cell, "3");
+      const totalDelay = RATTLE_INTERVALS.reduce((a, b) => a + b, 0);
+      return delay(totalDelay + 50).then(() => {
+        cell.querySelector(".bottom-flap").dispatchEvent(new Event("animationend"));
+        return p;
+      }).then(() => {
+        assert(!cell.classList.contains("rattle-settle"), "rattle-settle should be removed");
+      });
+    });
+
+    test("rattleCell shows random chars during rattle phase", () => {
+      const container = document.getElementById("secondary-container");
+      container.innerHTML = "";
+      const result = renderSecondaryClock(container, { name: "TEST", tz: "America/Chicago" });
+      const cell = result.cells[0];
+      const initialText = cell.querySelector(".top-static span").textContent;
+      const p = rattleCell(cell, "9");
+      // After a few rattle steps, text should have changed from initial en-dash
+      return delay(100).then(() => {
+        const current = cell.querySelector(".top-static span").textContent;
+        assert(RATTLE_CHARS.includes(current), `current char "${current}" should be a digit`);
+        // Wait for rattle to finish and clean up
+        const totalDelay = RATTLE_INTERVALS.reduce((a, b) => a + b, 0);
+        return delay(totalDelay);
+      }).then(() => {
+        cell.querySelector(".bottom-flap").dispatchEvent(new Event("animationend"));
+        return p;
+      });
+    });
+
+    // ── powerOnRattle ──
+    section("powerOnRattle");
+
+    test("powerOnRattle returns a promise that resolves", () => {
+      const clockEl = document.getElementById("test-clock");
+      const { cells, periodEl } = renderClock(clockEl, false);
+      const digits = ["1", "2", "3", "0"];
+      const p = powerOnRattle(cells, periodEl, digits, "AM", 0);
+      assert(p && typeof p.then === "function", "should return a promise");
+      const totalDelay = RATTLE_INTERVALS.reduce((a, b) => a + b, 0);
+      return delay(totalDelay + 50).then(() => {
+        fireAnimationEndOnAll(cells);
+        return p;
+      });
+    });
+
+    test("powerOnRattle sets period label", () => {
+      const clockEl = document.getElementById("test-clock");
+      const { cells, periodEl } = renderClock(clockEl, false);
+      const digits = ["1", "2", "3", "0"];
+      const p = powerOnRattle(cells, periodEl, digits, "PM", 0);
+      assertEqual(periodEl.textContent, "PM", "period label should be set immediately");
+      const totalDelay = RATTLE_INTERVALS.reduce((a, b) => a + b, 0);
+      return delay(totalDelay + 50).then(() => {
+        fireAnimationEndOnAll(cells);
+        return p;
+      });
+    });
+
+    test("powerOnRattle lands all cells on correct digits", () => {
+      const clockEl = document.getElementById("test-clock");
+      const { cells, periodEl } = renderClock(clockEl, false);
+      const digits = ["1", "0", "4", "5"];
+      const p = powerOnRattle(cells, periodEl, digits, "AM", 0);
+      const totalDelay = RATTLE_INTERVALS.reduce((a, b) => a + b, 0);
+      return delay(totalDelay + 50).then(() => {
+        fireAnimationEndOnAll(cells);
+        return p;
+      }).then(() => {
+        for (let i = 0; i < cells.length; i++) {
+          assertEqual(
+            cells[i].querySelector(".top-static span").textContent,
+            digits[i],
+            `cell[${i}] top-static`
+          );
+        }
+      });
+    });
+
+    test("powerOnRattle with cellStagger delays later cells", () => {
+      const clockEl = document.getElementById("test-clock");
+      const { cells, periodEl } = renderClock(clockEl, false);
+      const digits = ["1", "2", "3", "0"];
+      const p = powerOnRattle(cells, periodEl, digits, "PM", 80);
+      // After a short delay, first cell should be rattling but last cell still en-dash
+      return delay(30).then(() => {
+        const first = cells[0].querySelector(".top-static span").textContent;
+        const last = cells[3].querySelector(".top-static span").textContent;
+        // First cell should have started rattling (random digit)
+        assert(first !== "\u2013", "first cell should have started rattling");
+        // Last cell hasn't started yet (stagger = 3*80 = 240ms)
+        assertEqual(last, "\u2013", "last cell should still be en-dash");
+        // Wait for everything to finish
+        const totalDelay = RATTLE_INTERVALS.reduce((a, b) => a + b, 0);
+        return delay(totalDelay + 300);
+      }).then(() => {
+        fireAnimationEndOnAll(cells);
+        return p;
+      });
+    });
   </script>
 </body>
 </html>

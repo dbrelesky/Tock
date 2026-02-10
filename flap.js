@@ -173,6 +173,66 @@ function powerOnCascade(cells, periodEl, digits, period, staggerMs) {
   });
 }
 
+// ── Power-on rattle (rapid random digits → ease → settle) ──
+
+var RATTLE_CHARS = "0123456789";
+// Intervals between each random character — fast start, easing slower
+var RATTLE_INTERVALS = [25, 28, 32, 38, 48, 62, 82, 110, 150];
+
+function rattleCell(cell, targetChar) {
+  return new Promise(function (resolve) {
+    var step = 0;
+
+    function setAllLayers(ch) {
+      cell.querySelector(".top-static span").textContent = ch;
+      cell.querySelector(".bottom-static span").textContent = ch;
+      cell.querySelector(".top-flap span").textContent = ch;
+      cell.querySelector(".bottom-flap span").textContent = ch;
+    }
+
+    function next() {
+      if (step < RATTLE_INTERVALS.length) {
+        var ch = RATTLE_CHARS[Math.floor(Math.random() * RATTLE_CHARS.length)];
+        setAllLayers(ch);
+        var delay = RATTLE_INTERVALS[step];
+        step++;
+        setTimeout(next, delay);
+      } else {
+        // Final flip with animation to land on the real digit
+        // Tag cell so CSS uses the bouncier rattle-settle keyframes
+        cell.classList.add("rattle-settle");
+        var current = cell.querySelector(".top-static span").textContent;
+        triggerFlip(cell, current, targetChar);
+        var bf = cell.querySelector(".bottom-flap");
+        bf.addEventListener("animationend", function onEnd() {
+          bf.removeEventListener("animationend", onEnd);
+          cell.classList.remove("rattle-settle");
+          resolve();
+        });
+      }
+    }
+
+    next();
+  });
+}
+
+function powerOnRattle(cells, periodEl, digits, period, cellStaggerMs) {
+  periodEl.textContent = period;
+
+  var promises = [];
+  for (var i = 0; i < cells.length; i++) {
+    (function (idx) {
+      promises.push(new Promise(function (resolve) {
+        setTimeout(function () {
+          rattleCell(cells[idx], digits[idx]).then(resolve);
+        }, idx * cellStaggerMs);
+      }));
+    })(i);
+  }
+
+  return Promise.all(promises);
+}
+
 // ── Tick loop ──
 
 function startTickLoop(cells, periodEl, timeZone, showSeconds, initialDigits) {
@@ -296,26 +356,35 @@ async function init() {
   var primaryTime = getTimeForZone("America/New_York");
   var primaryDigits = showSeconds ? primaryTime.digits : primaryTime.digits.slice(0, 4);
 
-  // Cascade primary first
-  await powerOnCascade(primaryCells, primaryPeriodEl, primaryDigits, primaryTime.period, 50);
+  // Rattle primary first — cells stagger 40ms apart
+  var primaryRattle = powerOnRattle(primaryCells, primaryPeriodEl, primaryDigits, primaryTime.period, 40);
 
-  // Cascade all secondary clocks in parallel
-  var secondaryCascades = [];
+  // Stagger secondary clock starts so they don't all settle at the same time
+  var CLOCK_STAGGER_MS = 150;
+  var allRattles = [primaryRattle];
+
   for (var i = 0; i < secondaryClocks.length; i++) {
-    var sc = secondaryClocks[i];
-    var time = getTimeForZone(sc.tz);
-    var digits = time.digits.slice(0, 4);
+    (function (idx) {
+      allRattles.push(new Promise(function (resolve) {
+        setTimeout(function () {
+          var sc = secondaryClocks[idx];
+          var time = getTimeForZone(sc.tz);
+          var digits = time.digits.slice(0, 4);
 
-    // Update day badge during cascade
-    var dayOffset = getDayOffset(sc.tz, "America/New_York");
-    if (dayOffset) {
-      sc.dayBadgeEl.textContent = dayOffset;
-      sc.dayBadgeEl.style.display = "";
-    }
+          // Update day badge
+          var dayOffset = getDayOffset(sc.tz, "America/New_York");
+          if (dayOffset) {
+            sc.dayBadgeEl.textContent = dayOffset;
+            sc.dayBadgeEl.style.display = "";
+          }
 
-    secondaryCascades.push(powerOnCascade(sc.cells, sc.periodEl, digits, time.period, 50));
+          powerOnRattle(sc.cells, sc.periodEl, digits, time.period, 40).then(resolve);
+        }, 200 + idx * CLOCK_STAGGER_MS);
+      }));
+    })(i);
   }
-  await Promise.all(secondaryCascades);
+
+  await Promise.all(allRattles);
 
   // ── Unified tick loop ──
   var primaryPrev = primaryDigits;
