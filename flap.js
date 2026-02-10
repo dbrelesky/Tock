@@ -150,21 +150,46 @@ function setAllDigits(cells, digits) {
   }
 }
 
-function startTickLoop(cells, periodEl, timeZone, showSeconds) {
-  let prevDigits = null;
+// ── Power-on cascade ──
+
+function powerOnCascade(cells, periodEl, digits, period, staggerMs) {
+  periodEl.textContent = period;
+
+  return new Promise(function (resolve) {
+    cells.forEach(function (cell, i) {
+      setTimeout(function () {
+        triggerFlip(cell, "\u2013", digits[i]);
+
+        // Resolve after the last cell's animation finishes
+        if (i === cells.length - 1) {
+          var bottomFlap = cell.querySelector(".bottom-flap");
+          bottomFlap.addEventListener("animationend", function onEnd() {
+            bottomFlap.removeEventListener("animationend", onEnd);
+            resolve();
+          });
+        }
+      }, i * staggerMs);
+    });
+  });
+}
+
+// ── Tick loop ──
+
+function startTickLoop(cells, periodEl, timeZone, showSeconds, initialDigits) {
+  var prevDigits = initialDigits || null;
 
   function tick() {
-    const time = getTimeForZone(timeZone);
-    const digits = showSeconds ? time.digits : time.digits.slice(0, 4);
+    var time = getTimeForZone(timeZone);
+    var digits = showSeconds ? time.digits : time.digits.slice(0, 4);
 
     if (!prevDigits) {
-      // First tick: set all digits instantly (no animation)
+      // First tick without cascade: set all digits instantly
       setAllDigits(cells, digits);
       periodEl.textContent = time.period;
     } else {
-      const changed = diffDigits(prevDigits, digits);
-      for (const i of changed) {
-        triggerFlip(cells[i], prevDigits[i], digits[i]);
+      var changed = diffDigits(prevDigits, digits);
+      for (var j = 0; j < changed.length; j++) {
+        triggerFlip(cells[changed[j]], prevDigits[changed[j]], digits[changed[j]]);
       }
       if (periodEl.textContent !== time.period) {
         periodEl.textContent = time.period;
@@ -181,19 +206,28 @@ function startTickLoop(cells, periodEl, timeZone, showSeconds) {
 // ── Settings ──
 
 function loadSettings() {
-  const stored = localStorage.getItem("tock-showSeconds");
+  var stored = localStorage.getItem("tock-showSeconds");
   return stored === null ? true : stored === "true";
 }
 
 // ── Init (only runs on index.html, not test pages) ──
 
-function init() {
-  const clockEl = document.getElementById("clock");
+async function init() {
+  var clockEl = document.getElementById("clock");
   if (!clockEl) return;
 
-  const showSeconds = loadSettings();
-  const { cells, periodEl } = renderClock(clockEl, showSeconds);
-  startTickLoop(cells, periodEl, "America/New_York", showSeconds);
+  var showSeconds = loadSettings();
+  var { cells, periodEl } = renderClock(clockEl, showSeconds);
+
+  // Get current time for cascade
+  var time = getTimeForZone("America/New_York");
+  var digits = showSeconds ? time.digits : time.digits.slice(0, 4);
+
+  // Cascade: blank → current time, staggered left-to-right
+  await powerOnCascade(cells, periodEl, digits, time.period, 50);
+
+  // Start tick loop — pass digits so first tick diffs instead of instant-setting
+  startTickLoop(cells, periodEl, "America/New_York", showSeconds, digits);
 }
 
 init();
