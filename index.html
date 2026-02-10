@@ -15,6 +15,46 @@
     <div class="secondary-row" id="secondary-clocks"></div>
   </div>
 
+  <!-- Admin trigger -->
+  <button class="admin-trigger" id="admin-trigger" aria-label="Settings">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+    </svg>
+  </button>
+
+  <!-- Admin panel -->
+  <div class="admin-overlay" id="admin-overlay">
+    <div class="admin-panel" id="admin-panel">
+      <div class="admin-header">
+        <span class="admin-title">SETTINGS</span>
+        <button class="admin-close" id="admin-close" aria-label="Close">&times;</button>
+      </div>
+
+      <div class="admin-section">
+        <label class="admin-toggle-row">
+          <span class="admin-label">Show seconds</span>
+          <input type="checkbox" id="toggle-seconds" class="admin-checkbox">
+          <span class="admin-switch"></span>
+        </label>
+      </div>
+
+      <div class="admin-section">
+        <div class="admin-label">Cities</div>
+        <div class="admin-city-list" id="admin-city-list"></div>
+      </div>
+
+      <div class="admin-section">
+        <div class="admin-label">Add city</div>
+        <div class="admin-add-row">
+          <input type="text" id="add-city-name" class="admin-input" placeholder="City name" maxlength="20">
+          <input type="text" id="add-city-tz" class="admin-input admin-input-tz" placeholder="Timezone" list="tz-list">
+          <button class="admin-btn" id="add-city-btn">ADD</button>
+        </div>
+        <datalist id="tz-list"></datalist>
+      </div>
+    </div>
+  </div>
+
   <script src="flap.js"></script>
 </body>
 </html>

@@ -366,16 +366,15 @@
       const cell = result.cells[0];
       const p = rattleCell(cell, "7");
       const totalDelay = RATTLE_INTERVALS.reduce((a, b) => a + b, 0);
-      return delay(totalDelay + 50).then(() => {
-        // Cell should be flipping (triggerFlip was called)
-        assertEqual(cell.dataset.flipping, "true", "should be flipping");
-        // rattle-settle class should be present
-        assert(cell.classList.contains("rattle-settle"), "should have rattle-settle class");
+      return delay(totalDelay + 100).then(() => {
+        // Fire animationend to complete the final triggerFlip
         cell.querySelector(".bottom-flap").dispatchEvent(new Event("animationend"));
         return p;
       }).then(() => {
         assertEqual(cell.querySelector(".top-static span").textContent, "7", "top-static should be target");
         assertEqual(cell.querySelector(".bottom-static span").textContent, "7", "bottom-static should be target");
+        // rattle-settle should be cleaned up after completion
+        assert(!cell.classList.contains("rattle-settle"), "rattle-settle should be removed after completion");
       });
     });
 

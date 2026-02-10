@@ -289,11 +289,35 @@ var DEFAULT_CITIES = [
   { name: "TEL AVIV", tz: "Asia/Jerusalem" },
 ];
 
-// ── Settings ──
+// ── Settings & persistence ──
 
-function loadSettings() {
+function loadShowSeconds() {
   var stored = localStorage.getItem("tock-showSeconds");
   return stored === null ? true : stored === "true";
+}
+
+function saveShowSeconds(val) {
+  localStorage.setItem("tock-showSeconds", String(val));
+}
+
+function loadCities() {
+  var stored = localStorage.getItem("tock-cities");
+  if (stored) {
+    try {
+      var parsed = JSON.parse(stored);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    } catch (e) { /* fall through */ }
+  }
+  return DEFAULT_CITIES.slice();
+}
+
+function saveCities(cities) {
+  localStorage.setItem("tock-cities", JSON.stringify(cities));
+}
+
+// Kept for backward compat with tests
+function loadSettings() {
+  return loadShowSeconds();
 }
 
 // ── Render secondary clock DOM ──
@@ -334,59 +358,110 @@ function renderSecondaryClock(container, city) {
   };
 }
 
+// ── Common IANA timezones for datalist ──
+
+var COMMON_TIMEZONES = [
+  "America/New_York", "America/Chicago", "America/Denver", "America/Los_Angeles",
+  "America/Anchorage", "Pacific/Honolulu", "America/Phoenix", "America/Toronto",
+  "America/Vancouver", "America/Mexico_City", "America/Bogota", "America/Sao_Paulo",
+  "America/Argentina/Buenos_Aires", "America/Santiago", "Europe/London", "Europe/Paris",
+  "Europe/Berlin", "Europe/Madrid", "Europe/Rome", "Europe/Amsterdam",
+  "Europe/Stockholm", "Europe/Moscow", "Europe/Istanbul", "Africa/Cairo",
+  "Africa/Johannesburg", "Africa/Lagos", "Asia/Dubai", "Asia/Kolkata",
+  "Asia/Bangkok", "Asia/Singapore", "Asia/Hong_Kong", "Asia/Shanghai",
+  "Asia/Tokyo", "Asia/Seoul", "Asia/Jerusalem", "Asia/Taipei",
+  "Australia/Sydney", "Australia/Melbourne", "Australia/Perth",
+  "Pacific/Auckland", "Pacific/Fiji",
+];
+
+// ── Admin panel logic ──
+
+function openAdmin() {
+  var overlay = document.getElementById("admin-overlay");
+  if (overlay) overlay.classList.add("open");
+}
+
+function closeAdmin() {
+  var overlay = document.getElementById("admin-overlay");
+  if (overlay) overlay.classList.remove("open");
+}
+
+function renderCityList(cities, onRemove) {
+  var list = document.getElementById("admin-city-list");
+  if (!list) return;
+  list.innerHTML = "";
+  for (var i = 0; i < cities.length; i++) {
+    (function (idx) {
+      var item = document.createElement("div");
+      item.className = "admin-city-item";
+
+      var nameSpan = document.createElement("span");
+      nameSpan.className = "admin-city-name";
+      nameSpan.textContent = cities[idx].name;
+
+      var tzSpan = document.createElement("span");
+      tzSpan.className = "admin-city-tz";
+      tzSpan.textContent = cities[idx].tz;
+
+      var info = document.createElement("span");
+      info.style.display = "flex";
+      info.style.alignItems = "center";
+      info.appendChild(nameSpan);
+      info.appendChild(tzSpan);
+
+      var removeBtn = document.createElement("button");
+      removeBtn.className = "admin-city-remove";
+      removeBtn.textContent = "\u00d7";
+      removeBtn.setAttribute("aria-label", "Remove " + cities[idx].name);
+      removeBtn.addEventListener("click", function () {
+        onRemove(idx);
+      });
+
+      item.appendChild(info);
+      item.appendChild(removeBtn);
+      list.appendChild(item);
+    })(i);
+  }
+}
+
+function populateTimezoneList() {
+  var datalist = document.getElementById("tz-list");
+  if (!datalist) return;
+  for (var i = 0; i < COMMON_TIMEZONES.length; i++) {
+    var opt = document.createElement("option");
+    opt.value = COMMON_TIMEZONES[i];
+    datalist.appendChild(opt);
+  }
+}
+
 // ── Init (only runs on index.html, not test pages) ──
 
-async function init() {
-  var clockEl = document.getElementById("clock");
-  if (!clockEl) return;
+var _tickInterval = null;
 
-  var showSeconds = loadSettings();
+function buildAndStart(clockEl, secondaryContainer, showSeconds, cities, animate) {
+  // Clear previous tick loop
+  if (_tickInterval) {
+    clearInterval(_tickInterval);
+    _tickInterval = null;
+  }
+
+  // Re-render primary
+  clockEl.querySelector(".clock-digits").innerHTML = "";
   var primaryResult = renderClock(clockEl, showSeconds);
   var primaryCells = primaryResult.cells;
   var primaryPeriodEl = primaryResult.periodEl;
 
-  // Render secondary clocks
-  var secondaryContainer = document.getElementById("secondary-clocks");
+  // Re-render secondary clocks
+  secondaryContainer.innerHTML = "";
   var secondaryClocks = [];
-  for (var i = 0; i < DEFAULT_CITIES.length; i++) {
-    secondaryClocks.push(renderSecondaryClock(secondaryContainer, DEFAULT_CITIES[i]));
+  for (var i = 0; i < cities.length; i++) {
+    secondaryClocks.push(renderSecondaryClock(secondaryContainer, cities[i]));
   }
 
   // Get current times
   var primaryTime = getTimeForZone("America/New_York");
   var primaryDigits = showSeconds ? primaryTime.digits : primaryTime.digits.slice(0, 4);
 
-  // Rattle primary first — cells stagger 40ms apart
-  var primaryRattle = powerOnRattle(primaryCells, primaryPeriodEl, primaryDigits, primaryTime.period, 40);
-
-  // Stagger secondary clock starts so they don't all settle at the same time
-  var CLOCK_STAGGER_MS = 150;
-  var allRattles = [primaryRattle];
-
-  for (var i = 0; i < secondaryClocks.length; i++) {
-    (function (idx) {
-      allRattles.push(new Promise(function (resolve) {
-        setTimeout(function () {
-          var sc = secondaryClocks[idx];
-          var time = getTimeForZone(sc.tz);
-          var digits = time.digits.slice(0, 4);
-
-          // Update day badge
-          var dayOffset = getDayOffset(sc.tz, "America/New_York");
-          if (dayOffset) {
-            sc.dayBadgeEl.textContent = dayOffset;
-            sc.dayBadgeEl.style.display = "";
-          }
-
-          powerOnRattle(sc.cells, sc.periodEl, digits, time.period, 40).then(resolve);
-        }, 200 + idx * CLOCK_STAGGER_MS);
-      }));
-    })(i);
-  }
-
-  await Promise.all(allRattles);
-
-  // ── Unified tick loop ──
   var primaryPrev = primaryDigits;
   var secondaryPrevs = [];
   for (var i = 0; i < secondaryClocks.length; i++) {
@@ -394,46 +469,174 @@ async function init() {
     secondaryPrevs.push(time.digits.slice(0, 4));
   }
 
-  function tick() {
-    // Primary
-    var pTime = getTimeForZone("America/New_York");
-    var pDigits = showSeconds ? pTime.digits : pTime.digits.slice(0, 4);
-    var pChanged = diffDigits(primaryPrev, pDigits);
-    for (var j = 0; j < pChanged.length; j++) {
-      triggerFlip(primaryCells[pChanged[j]], primaryPrev[pChanged[j]], pDigits[pChanged[j]]);
-    }
-    if (primaryPeriodEl.textContent !== pTime.period) {
-      primaryPeriodEl.textContent = pTime.period;
-    }
-    primaryPrev = pDigits;
+  if (animate) {
+    // Rattle animation
+    var primaryRattle = powerOnRattle(primaryCells, primaryPeriodEl, primaryDigits, primaryTime.period, 40);
 
-    // Secondary clocks
+    var CLOCK_STAGGER_MS = 150;
+    var allRattles = [primaryRattle];
+
+    for (var i = 0; i < secondaryClocks.length; i++) {
+      (function (idx) {
+        allRattles.push(new Promise(function (resolve) {
+          setTimeout(function () {
+            var sc = secondaryClocks[idx];
+            var t = getTimeForZone(sc.tz);
+            var d = t.digits.slice(0, 4);
+            var dayOffset = getDayOffset(sc.tz, "America/New_York");
+            if (dayOffset) {
+              sc.dayBadgeEl.textContent = dayOffset;
+              sc.dayBadgeEl.style.display = "";
+            }
+            powerOnRattle(sc.cells, sc.periodEl, d, t.period, 40).then(resolve);
+          }, 200 + idx * CLOCK_STAGGER_MS);
+        }));
+      })(i);
+    }
+
+    Promise.all(allRattles).then(function () {
+      startTick();
+    });
+  } else {
+    // Instant set (no animation — used on settings change)
+    setAllDigits(primaryCells, primaryDigits);
+    primaryPeriodEl.textContent = primaryTime.period;
     for (var i = 0; i < secondaryClocks.length; i++) {
       var sc = secondaryClocks[i];
-      var sTime = getTimeForZone(sc.tz);
-      var sDigits = sTime.digits.slice(0, 4);
-      var sChanged = diffDigits(secondaryPrevs[i], sDigits);
-      for (var j = 0; j < sChanged.length; j++) {
-        triggerFlip(sc.cells[sChanged[j]], secondaryPrevs[i][sChanged[j]], sDigits[sChanged[j]]);
-      }
-      if (sc.periodEl.textContent !== sTime.period) {
-        sc.periodEl.textContent = sTime.period;
-      }
-
-      // Update day badge
+      var t = getTimeForZone(sc.tz);
+      var d = t.digits.slice(0, 4);
+      setAllDigits(sc.cells, d);
+      sc.periodEl.textContent = t.period;
       var dayOffset = getDayOffset(sc.tz, "America/New_York");
       if (dayOffset) {
         sc.dayBadgeEl.textContent = dayOffset;
         sc.dayBadgeEl.style.display = "";
-      } else {
-        sc.dayBadgeEl.style.display = "none";
       }
-
-      secondaryPrevs[i] = sDigits;
     }
+    startTick();
   }
 
-  setInterval(tick, 1000);
+  function startTick() {
+    function tick() {
+      var pTime = getTimeForZone("America/New_York");
+      var pDigits = showSeconds ? pTime.digits : pTime.digits.slice(0, 4);
+      var pChanged = diffDigits(primaryPrev, pDigits);
+      for (var j = 0; j < pChanged.length; j++) {
+        triggerFlip(primaryCells[pChanged[j]], primaryPrev[pChanged[j]], pDigits[pChanged[j]]);
+      }
+      if (primaryPeriodEl.textContent !== pTime.period) {
+        primaryPeriodEl.textContent = pTime.period;
+      }
+      primaryPrev = pDigits;
+
+      for (var i = 0; i < secondaryClocks.length; i++) {
+        var sc = secondaryClocks[i];
+        var sTime = getTimeForZone(sc.tz);
+        var sDigits = sTime.digits.slice(0, 4);
+        var sChanged = diffDigits(secondaryPrevs[i], sDigits);
+        for (var j = 0; j < sChanged.length; j++) {
+          triggerFlip(sc.cells[sChanged[j]], secondaryPrevs[i][sChanged[j]], sDigits[sChanged[j]]);
+        }
+        if (sc.periodEl.textContent !== sTime.period) {
+          sc.periodEl.textContent = sTime.period;
+        }
+        var dayOffset = getDayOffset(sc.tz, "America/New_York");
+        if (dayOffset) {
+          sc.dayBadgeEl.textContent = dayOffset;
+          sc.dayBadgeEl.style.display = "";
+        } else {
+          sc.dayBadgeEl.style.display = "none";
+        }
+        secondaryPrevs[i] = sDigits;
+      }
+    }
+
+    _tickInterval = setInterval(tick, 1000);
+  }
+}
+
+function init() {
+  var clockEl = document.getElementById("clock");
+  if (!clockEl) return;
+
+  var secondaryContainer = document.getElementById("secondary-clocks");
+  var showSeconds = loadShowSeconds();
+  var cities = loadCities();
+
+  // Initial build with rattle animation
+  buildAndStart(clockEl, secondaryContainer, showSeconds, cities, true);
+
+  // ── Admin panel wiring ──
+  var trigger = document.getElementById("admin-trigger");
+  var closeBtn = document.getElementById("admin-close");
+  var overlay = document.getElementById("admin-overlay");
+  var toggleSecondsEl = document.getElementById("toggle-seconds");
+  var addCityBtn = document.getElementById("add-city-btn");
+  var addNameInput = document.getElementById("add-city-name");
+  var addTzInput = document.getElementById("add-city-tz");
+
+  if (!trigger) return; // not on index.html
+
+  populateTimezoneList();
+
+  // Set initial toggle state
+  toggleSecondsEl.checked = showSeconds;
+
+  // Render initial city list
+  renderCityList(cities, removeCity);
+
+  // Open/close
+  trigger.addEventListener("click", openAdmin);
+  closeBtn.addEventListener("click", closeAdmin);
+  overlay.addEventListener("click", function (e) {
+    if (e.target === overlay) closeAdmin();
+  });
+
+  // Toggle seconds
+  toggleSecondsEl.addEventListener("change", function () {
+    showSeconds = toggleSecondsEl.checked;
+    saveShowSeconds(showSeconds);
+    buildAndStart(clockEl, secondaryContainer, showSeconds, cities, false);
+  });
+
+  // Remove city
+  function removeCity(idx) {
+    cities.splice(idx, 1);
+    saveCities(cities);
+    renderCityList(cities, removeCity);
+    buildAndStart(clockEl, secondaryContainer, showSeconds, cities, false);
+  }
+
+  // Add city
+  addCityBtn.addEventListener("click", function () {
+    var name = addNameInput.value.trim();
+    var tz = addTzInput.value.trim();
+    if (!name || !tz) return;
+
+    // Validate timezone
+    try {
+      Intl.DateTimeFormat(undefined, { timeZone: tz });
+    } catch (e) {
+      addTzInput.style.borderColor = "#d44";
+      setTimeout(function () { addTzInput.style.borderColor = ""; }, 1500);
+      return;
+    }
+
+    cities.push({ name: name.toUpperCase(), tz: tz });
+    saveCities(cities);
+    addNameInput.value = "";
+    addTzInput.value = "";
+    renderCityList(cities, removeCity);
+    buildAndStart(clockEl, secondaryContainer, showSeconds, cities, false);
+  });
+
+  // Allow Enter key in add-city inputs
+  addNameInput.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") addCityBtn.click();
+  });
+  addTzInput.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") addCityBtn.click();
+  });
 }
 
 init();

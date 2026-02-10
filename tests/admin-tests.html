@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Tock — Admin Panel Tests</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #111; color: #ccc; font-family: "SF Mono", monospace; padding: 2rem; }
+    h1 { font-size: 1rem; margin-bottom: 1rem; color: #e0d8b0; }
+    h2 { font-size: 0.85rem; margin-top: 1rem; margin-bottom: 0.5rem; color: #888; }
+    .pass { color: #4a2; }
+    .fail { color: #d44; }
+    .result { padding: 0.25rem 0; font-size: 0.85rem; }
+    #summary { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #333; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <h1>flap.js — admin panel tests</h1>
+  <div id="log"></div>
+  <div id="summary"></div>
+
+  <!-- Hidden test fixtures -->
+  <div style="display:none">
+    <div id="secondary-container"></div>
+    <div class="clock" id="test-clock">
+      <div class="clock-digits"></div>
+    </div>
+    <!-- Minimal admin panel fixture -->
+    <div id="admin-overlay">
+      <div id="admin-panel">
+        <div id="admin-city-list"></div>
+      </div>
+    </div>
+    <datalist id="tz-list"></datalist>
+  </div>
+
+  <script>
+    // ── Minimal test runner ──
+    const log = document.getElementById("log");
+    let passed = 0, failed = 0, pending = 0;
+
+    function assert(condition, msg) {
+      if (!condition) throw new Error(msg);
+    }
+
+    function assertEqual(actual, expected, msg) {
+      if (actual !== expected) {
+        throw new Error(`${msg}: expected "${expected}", got "${actual}"`);
+      }
+    }
+
+    function assertDeepEqual(actual, expected, msg) {
+      const a = JSON.stringify(actual);
+      const b = JSON.stringify(expected);
+      if (a !== b) {
+        throw new Error(`${msg}: expected ${b}, got ${a}`);
+      }
+    }
+
+    function logResult(name, pass, errMsg) {
+      if (pass) {
+        passed++;
+        log.innerHTML += `<div class="result pass">✓ ${name}</div>`;
+      } else {
+        failed++;
+        log.innerHTML += `<div class="result fail">✗ ${name} — ${errMsg}</div>`;
+      }
+      pending--;
+      if (pending === 0) showSummary();
+    }
+
+    function test(name, fn) {
+      pending++;
+      try {
+        const result = fn();
+        if (result && typeof result.then === "function") {
+          result.then(() => logResult(name, true))
+                .catch(e => logResult(name, false, e.message));
+        } else {
+          logResult(name, true);
+        }
+      } catch (e) {
+        logResult(name, false, e.message);
+      }
+    }
+
+    function section(name) {
+      log.innerHTML += `<h2>${name}</h2>`;
+    }
+
+    function showSummary() {
+      const total = passed + failed;
+      const summary = document.getElementById("summary");
+      summary.className = failed ? "fail" : "pass";
+      summary.textContent = `${passed}/${total} passed` + (failed ? ` — ${failed} failed` : "");
+    }
+
+    // Clean localStorage before each test group
+    function clearStorage() {
+      localStorage.removeItem("tock-showSeconds");
+      localStorage.removeItem("tock-cities");
+    }
+  </script>
+
+  <!-- Load flap.js (init() exits early — no #clock element with correct structure) -->
+  <script src="../flap.js"></script>
+
+  <script>
+    // ── loadShowSeconds ──
+    section("loadShowSeconds");
+
+    test("defaults to true when nothing stored", () => {
+      clearStorage();
+      assertEqual(loadShowSeconds(), true, "default");
+    });
+
+    test("returns true when stored as 'true'", () => {
+      clearStorage();
+      localStorage.setItem("tock-showSeconds", "true");
+      assertEqual(loadShowSeconds(), true, "stored true");
+    });
+
+    test("returns false when stored as 'false'", () => {
+      clearStorage();
+      localStorage.setItem("tock-showSeconds", "false");
+      assertEqual(loadShowSeconds(), false, "stored false");
+    });
+
+    // ── saveShowSeconds ──
+    section("saveShowSeconds");
+
+    test("saves true to localStorage", () => {
+      clearStorage();
+      saveShowSeconds(true);
+      assertEqual(localStorage.getItem("tock-showSeconds"), "true", "saved true");
+    });
+
+    test("saves false to localStorage", () => {
+      clearStorage();
+      saveShowSeconds(false);
+      assertEqual(localStorage.getItem("tock-showSeconds"), "false", "saved false");
+    });
+
+    // ── loadCities ──
+    section("loadCities");
+
+    test("returns DEFAULT_CITIES when nothing stored", () => {
+      clearStorage();
+      const cities = loadCities();
+      assertEqual(cities.length, DEFAULT_CITIES.length, "city count");
+      assertEqual(cities[0].name, DEFAULT_CITIES[0].name, "first city name");
+    });
+
+    test("returns stored cities when valid JSON in localStorage", () => {
+      clearStorage();
+      const custom = [{ name: "LONDON", tz: "Europe/London" }];
+      localStorage.setItem("tock-cities", JSON.stringify(custom));
+      const cities = loadCities();
+      assertEqual(cities.length, 1, "city count");
+      assertEqual(cities[0].name, "LONDON", "city name");
+      assertEqual(cities[0].tz, "Europe/London", "city tz");
+    });
+
+    test("returns DEFAULT_CITIES when stored value is invalid JSON", () => {
+      clearStorage();
+      localStorage.setItem("tock-cities", "not json");
+      const cities = loadCities();
+      assertEqual(cities.length, DEFAULT_CITIES.length, "should fall back to defaults");
+    });
+
+    test("returns DEFAULT_CITIES when stored value is empty array", () => {
+      clearStorage();
+      localStorage.setItem("tock-cities", "[]");
+      const cities = loadCities();
+      assertEqual(cities.length, DEFAULT_CITIES.length, "should fall back to defaults for empty");
+    });
+
+    test("returns a copy (not the same reference as DEFAULT_CITIES)", () => {
+      clearStorage();
+      const cities = loadCities();
+      assert(cities !== DEFAULT_CITIES, "should be a different reference");
+    });
+
+    // ── saveCities ──
+    section("saveCities");
+
+    test("saves cities as JSON to localStorage", () => {
+      clearStorage();
+      const cities = [{ name: "TOKYO", tz: "Asia/Tokyo" }];
+      saveCities(cities);
+      const stored = localStorage.getItem("tock-cities");
+      assertDeepEqual(JSON.parse(stored), cities, "stored cities");
+    });
+
+    test("saved cities can be loaded back", () => {
+      clearStorage();
+      const cities = [
+        { name: "PARIS", tz: "Europe/Paris" },
+        { name: "BERLIN", tz: "Europe/Berlin" },
+      ];
+      saveCities(cities);
+      const loaded = loadCities();
+      assertEqual(loaded.length, 2, "city count");
+      assertEqual(loaded[0].name, "PARIS", "first city");
+      assertEqual(loaded[1].name, "BERLIN", "second city");
+    });
+
+    // ── loadSettings backward compat ──
+    section("loadSettings backward compat");
+
+    test("loadSettings still works (calls loadShowSeconds)", () => {
+      clearStorage();
+      assertEqual(loadSettings(), true, "should default to true");
+      localStorage.setItem("tock-showSeconds", "false");
+      assertEqual(loadSettings(), false, "should read false");
+    });
+
+    // ── COMMON_TIMEZONES ──
+    section("COMMON_TIMEZONES");
+
+    test("is a non-empty array", () => {
+      assert(Array.isArray(COMMON_TIMEZONES), "should be array");
+      assert(COMMON_TIMEZONES.length > 20, "should have many timezones");
+    });
+
+    test("all entries are valid IANA timezone strings", () => {
+      for (const tz of COMMON_TIMEZONES) {
+        try {
+          Intl.DateTimeFormat(undefined, { timeZone: tz });
+        } catch (e) {
+          throw new Error(`"${tz}" is not a valid timezone`);
+        }
+      }
+    });
+
+    // ── openAdmin / closeAdmin ──
+    section("openAdmin / closeAdmin");
+
+    test("openAdmin adds .open class to overlay", () => {
+      const overlay = document.getElementById("admin-overlay");
+      overlay.classList.remove("open");
+      openAdmin();
+      assert(overlay.classList.contains("open"), "should have .open class");
+      overlay.classList.remove("open"); // cleanup
+    });
+
+    test("closeAdmin removes .open class from overlay", () => {
+      const overlay = document.getElementById("admin-overlay");
+      overlay.classList.add("open");
+      closeAdmin();
+      assert(!overlay.classList.contains("open"), "should not have .open class");
+    });
+
+    // ── renderCityList ──
+    section("renderCityList");
+
+    test("renders city items into admin-city-list", () => {
+      const cities = [
+        { name: "TOKYO", tz: "Asia/Tokyo" },
+        { name: "LONDON", tz: "Europe/London" },
+      ];
+      renderCityList(cities, () => {});
+      const list = document.getElementById("admin-city-list");
+      const items = list.querySelectorAll(".admin-city-item");
+      assertEqual(items.length, 2, "item count");
+    });
+
+    test("city items show correct names", () => {
+      const cities = [
+        { name: "SYDNEY", tz: "Australia/Sydney" },
+      ];
+      renderCityList(cities, () => {});
+      const list = document.getElementById("admin-city-list");
+      const name = list.querySelector(".admin-city-name");
+      assertEqual(name.textContent, "SYDNEY", "city name");
+    });
+
+    test("city items show timezone", () => {
+      const cities = [{ name: "TOKYO", tz: "Asia/Tokyo" }];
+      renderCityList(cities, () => {});
+      const list = document.getElementById("admin-city-list");
+      const tz = list.querySelector(".admin-city-tz");
+      assertEqual(tz.textContent, "Asia/Tokyo", "timezone");
+    });
+
+    test("remove button calls onRemove with correct index", () => {
+      const cities = [
+        { name: "A", tz: "America/New_York" },
+        { name: "B", tz: "Europe/London" },
+      ];
+      let removedIdx = -1;
+      renderCityList(cities, (idx) => { removedIdx = idx; });
+      const list = document.getElementById("admin-city-list");
+      const removeBtns = list.querySelectorAll(".admin-city-remove");
+      assertEqual(removeBtns.length, 2, "should have 2 remove buttons");
+      removeBtns[1].click();
+      assertEqual(removedIdx, 1, "should call onRemove with index 1");
+    });
+
+    test("clears previous list on re-render", () => {
+      renderCityList([{ name: "A", tz: "America/New_York" }], () => {});
+      renderCityList([{ name: "B", tz: "Europe/London" }], () => {});
+      const list = document.getElementById("admin-city-list");
+      const items = list.querySelectorAll(".admin-city-item");
+      assertEqual(items.length, 1, "should only have 1 item after re-render");
+      assertEqual(list.querySelector(".admin-city-name").textContent, "B", "should show new city");
+    });
+
+    // ── populateTimezoneList ──
+    section("populateTimezoneList");
+
+    test("populates datalist with timezone options", () => {
+      const datalist = document.getElementById("tz-list");
+      datalist.innerHTML = "";
+      populateTimezoneList();
+      const options = datalist.querySelectorAll("option");
+      assertEqual(options.length, COMMON_TIMEZONES.length, "option count");
+    });
+
+    // ── buildAndStart (instant mode) ──
+    section("buildAndStart");
+
+    test("buildAndStart with animate=false sets digits instantly", () => {
+      const clockEl = document.getElementById("test-clock");
+      const container = document.getElementById("secondary-container");
+      container.innerHTML = "";
+      const cities = [{ name: "LONDON", tz: "Europe/London" }];
+
+      buildAndStart(clockEl, container, true, cities, false);
+
+      // Primary should have 6 cells (with seconds)
+      const primaryCells = clockEl.querySelectorAll(".flap-cell");
+      assertEqual(primaryCells.length, 6, "primary cell count");
+
+      // Should have real digits (not en-dash)
+      const firstDigit = primaryCells[0].querySelector(".top-static span").textContent;
+      assert(firstDigit !== "\u2013", "should not be en-dash");
+
+      // Secondary should have 1 clock
+      const secondaryClocks = container.querySelectorAll(".clock.secondary");
+      assertEqual(secondaryClocks.length, 1, "secondary clock count");
+
+      // Clean up interval
+      if (_tickInterval) {
+        clearInterval(_tickInterval);
+        _tickInterval = null;
+      }
+    });
+
+    test("buildAndStart without seconds creates 4 primary cells", () => {
+      const clockEl = document.getElementById("test-clock");
+      const container = document.getElementById("secondary-container");
+      container.innerHTML = "";
+
+      buildAndStart(clockEl, container, false, [], false);
+
+      const primaryCells = clockEl.querySelectorAll(".flap-cell");
+      assertEqual(primaryCells.length, 4, "primary cell count without seconds");
+
+      if (_tickInterval) {
+        clearInterval(_tickInterval);
+        _tickInterval = null;
+      }
+    });
+
+    // ── Integration: add + remove cycle ──
+    section("integration: add/remove cities");
+
+    test("cities round-trip through localStorage", () => {
+      clearStorage();
+      const cities = [
+        { name: "TOKYO", tz: "Asia/Tokyo" },
+        { name: "LONDON", tz: "Europe/London" },
+      ];
+      saveCities(cities);
+
+      // Remove one
+      const loaded = loadCities();
+      loaded.splice(0, 1); // remove Tokyo
+      saveCities(loaded);
+
+      const final = loadCities();
+      assertEqual(final.length, 1, "should have 1 city");
+      assertEqual(final[0].name, "LONDON", "remaining city");
+    });
+
+    test("adding a city and saving persists correctly", () => {
+      clearStorage();
+      const cities = loadCities(); // defaults
+      cities.push({ name: "LONDON", tz: "Europe/London" });
+      saveCities(cities);
+
+      const loaded = loadCities();
+      assertEqual(loaded.length, DEFAULT_CITIES.length + 1, "should have defaults + 1");
+      assertEqual(loaded[loaded.length - 1].name, "LONDON", "last city should be London");
+    });
+
+    // Clean up
+    clearStorage();
+  </script>
+</body>
+</html>
