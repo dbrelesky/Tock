@@ -301,3 +301,220 @@ flowchart TB
 - **Lavender nodes (S)** = Data stores (localStorage)
 - **Solid lines** = Wires Out (calls, triggers, writes)
 - **Dashed lines** = Returns To (reads, return values)
+
+---
+
+## Slices
+
+Strategy: **prove the hard parts first** — the split-flap animation and real-time clock rendering. Then layer on secondary clocks, power-on polish, and finally the admin controls.
+
+### Slice Summary
+
+| # | Slice | Parts | Affordances | Demo |
+|---|-------|-------|-------------|------|
+| V1 | Flap digit proof | A1, A6 | N6, dark shell CSS | Single digit flips from 0→1 with physics animation — overshoot, bounce, settle |
+| V2 | Primary NYC clock | A2, A3, A5 | U1–U4, N1–N5, N8–N9, N11 | Full NYC clock shows real time in 12h, digits flip each second, dark theme |
+| V3 | Power-on cascade | A8 | N7 | Refresh page — digits cascade from blank into current time with staggered delays |
+| V4 | Secondary clocks | A4 | U5–U8, N10, S1 (read-only defaults) | Four smaller clocks below NYC, Auckland shows "TUE" when date differs |
+| V5 | Admin panel | A7 | U9–U16, N12–N14, S1, S2 | Open admin, toggle seconds, add/remove cities, refresh — everything persists |
+
+### Slice Details
+
+**V1: Flap digit proof** — *Validate the animation before wiring anything else*
+
+The riskiest piece. Build one flap digit cell with the four-layer DOM structure and CSS `@keyframes`. Wire a simple timer to cycle it through 0–9. Get the physics right: `ease-in` on the top flap, overshoot/bounce keyframes on the bottom flap, cast shadow, hinge gap. Dark background so we're seeing it in context.
+
+| # | Affordance | Control | Wires Out |
+|---|------------|---------|-----------|
+| N6 | `triggerFlip(el, old, new)` | call | → CSS animation |
+
+*Demo: A single digit flips through numbers. Top flap falls with gravity, bottom flap snaps down with overshoot and settle. Looks and feels like a real Solari card.*
+
+---
+
+**V2: Primary NYC clock** — *Wire real time to the proven animation*
+
+Build the clock assembly: group 6–7 flap digits into `HH : MM : SS` with colon separators and AM/PM. Wire `Intl.DateTimeFormat` with `America/New_York` and `hour12: true`. Start the tick loop. Diff digits each tick, only flip what changed. Add the "NEW YORK" label. Dark shell layout.
+
+| # | Affordance | Control | Wires Out | Returns To |
+|---|------------|---------|-----------|------------|
+| U1 | time digits (HH:MM:SS) | render | — | — |
+| U2 | AM/PM flap pair | render | — | — |
+| U3 | city label "NEW YORK" | render | — | — |
+| U4 | colon separators | render | — | — |
+| N1 | `init()` | call | → N2, → N3, → N8 | — |
+| N2 | `loadSettings()` | call | — | → S2 |
+| N3 | `renderClocks()` | call | → U1–U4 | — |
+| N4 | `getTimeForZone(tz)` | call | — | → N5 |
+| N5 | `diffDigits(prev, current)` | call | → N6 | — |
+| N8 | `startTickLoop()` | call | → N9 | — |
+| N9 | `setInterval(1000)` | timer | → N4 | — |
+| N11 | `prevDigits` | store | — | → N5 |
+
+*Demo: Full NYC clock centered on dark background. Real time in 12-hour format. Seconds tick with split-flap animation. AM/PM flips at noon/midnight.*
+
+---
+
+**V3: Power-on cascade** — *Polish the first impression*
+
+On page load, all digits start showing blank (or a dash). `powerOnCascade()` stagger-flips each digit from blank → current value with 30–80ms offsets, left to right. Primary clock cascades first.
+
+| # | Affordance | Control | Wires Out |
+|---|------------|---------|-----------|
+| N7 | `powerOnCascade()` | call | → N6 (staggered) |
+
+*Demo: Refresh the page. Digits rattle into place like an airport board powering on.*
+
+---
+
+**V4: Secondary clocks** — *Multiple timezones at a glance*
+
+Render 4 smaller clock assemblies below the primary. Each shows ALL CAPS city label + HH:MM + AM/PM. `getDayOffset()` compares each city's weekday to NYC — shows "TUE" badge next to Auckland when it's a day ahead. City list hardcoded to defaults (localStorage wiring comes in V5). Power-on cascade extends to secondary clocks.
+
+| # | Affordance | Control | Wires Out | Returns To |
+|---|------------|---------|-----------|------------|
+| U5 | time digits (HH:MM) | render | — | — |
+| U6 | AM/PM flap pair | render | — | — |
+| U7 | city label (ALL CAPS) | render | — | — |
+| U8 | day-of-week badge | render | — | — |
+| N10 | `getDayOffset(cityTz)` | call | — | → U8 |
+
+*Demo: NYC large up top, Nashville / Los Angeles / Auckland / Tel Aviv smaller below. Auckland shows "TUE" when it's tomorrow there. All ticking in real-time.*
+
+---
+
+**V5: Admin panel** — *Configurable cities + seconds toggle*
+
+Build the P2 overlay: gear icon trigger in corner of P1, slide-in drawer. Seconds toggle writes to `localStorage:showSeconds` and re-renders primary clock (hides/shows seconds flaps). City list rendered from `localStorage:cityList` with remove buttons per row. Add-city form: city name input + timezone selector. All changes persist immediately to localStorage. Close button returns to P1.
+
+| # | Affordance | Control | Wires Out | Returns To |
+|---|------------|---------|-----------|------------|
+| U9 | admin trigger | click | → P2 | — |
+| U10 | seconds toggle | click | → N12 | — |
+| U11 | city list | render | — | — |
+| U12 | remove city button | click | → N13 | — |
+| U13 | city name input | type | — | — |
+| U14 | timezone selector | select | — | — |
+| U15 | add city button | click | → N14 | — |
+| U16 | close button | click | → P1 | — |
+| N12 | `toggleSeconds(bool)` | call | → S2, → N3 | — |
+| N13 | `removeCity(index)` | call | → S1, → N3 | — |
+| N14 | `addCity(name, tz)` | call | → S1, → N3 | — |
+| S1 | `localStorage:cityList` | store | — | → U11, → N3 |
+| S2 | `localStorage:showSeconds` | store | — | → N3 |
+
+*Demo: Click gear icon. Toggle seconds off — seconds digits disappear from NYC clock. Add "London" with `Europe/London`. Remove "Nashville." Close admin. Refresh — changes persisted.*
+
+### Sliced Breadboard
+
+```mermaid
+flowchart TB
+    subgraph slice1["V1: FLAP DIGIT PROOF"]
+        N6_v1["N6: triggerFlip()"]
+    end
+
+    subgraph slice2["V2: PRIMARY NYC CLOCK"]
+        subgraph primaryClock_v2["primary-clock"]
+            U3_v2["U3: city label NEW YORK"]
+            U1_v2["U1: time digits HH:MM:SS"]
+            U4_v2["U4: colon separators"]
+            U2_v2["U2: AM/PM"]
+        end
+        N1_v2["N1: init()"]
+        N2_v2["N2: loadSettings()"]
+        N3_v2["N3: renderClocks()"]
+        N8_v2["N8: startTickLoop()"]
+        N9_v2["N9: setInterval(1000)"]
+        N4_v2["N4: getTimeForZone()"]
+        N5_v2["N5: diffDigits()"]
+        N11_v2["N11: prevDigits"]
+    end
+
+    subgraph slice3["V3: POWER-ON CASCADE"]
+        N7_v3["N7: powerOnCascade()"]
+    end
+
+    subgraph slice4["V4: SECONDARY CLOCKS"]
+        subgraph secondaryClock_v4["secondary-clock (×N)"]
+            U7_v4["U7: city label ALL CAPS"]
+            U8_v4["U8: day-of-week badge"]
+            U5_v4["U5: time digits HH:MM"]
+            U6_v4["U6: AM/PM"]
+        end
+        N10_v4["N10: getDayOffset()"]
+    end
+
+    subgraph slice5["V5: ADMIN PANEL"]
+        U9_v5["U9: admin trigger"]
+        U10_v5["U10: seconds toggle"]
+        U11_v5["U11: city list"]
+        U12_v5["U12: remove city btn"]
+        U13_v5["U13: city name input"]
+        U14_v5["U14: timezone selector"]
+        U15_v5["U15: add city btn"]
+        U16_v5["U16: close btn"]
+        N12_v5["N12: toggleSeconds()"]
+        N13_v5["N13: removeCity()"]
+        N14_v5["N14: addCity()"]
+        S1_v5["S1: localStorage:cityList"]
+        S2_v5["S2: localStorage:showSeconds"]
+    end
+
+    %% Cross-slice wiring
+    N1_v2 --> N2_v2
+    N1_v2 --> N3_v2
+    N1_v2 --> N8_v2
+    N1_v2 --> N7_v3
+    N3_v2 --> U1_v2
+    N3_v2 --> U2_v2
+    N3_v2 --> U3_v2
+    N3_v2 --> U5_v4
+    N3_v2 --> U7_v4
+    N8_v2 --> N9_v2
+    N9_v2 --> N4_v2
+    N9_v2 --> N10_v4
+    N4_v2 -.-> N5_v2
+    N11_v2 -.-> N5_v2
+    N5_v2 --> N6_v1
+    N6_v1 --> U1_v2
+    N6_v1 --> U5_v4
+    N7_v3 --> N6_v1
+    N10_v4 -.-> U8_v4
+    U9_v5 --> U10_v5
+    U10_v5 --> N12_v5
+    U12_v5 --> N13_v5
+    U15_v5 --> N14_v5
+    N12_v5 --> S2_v5
+    N12_v5 --> N3_v2
+    N13_v5 --> S1_v5
+    N13_v5 --> N3_v2
+    N14_v5 --> S1_v5
+    N14_v5 --> N3_v2
+    S1_v5 -.-> U11_v5
+    N2_v2 -.-> S1_v5
+    N2_v2 -.-> S2_v5
+
+    %% Force slice ordering
+    slice1 ~~~ slice2
+    slice2 ~~~ slice3
+    slice3 ~~~ slice4
+    slice4 ~~~ slice5
+
+    %% Slice styling
+    style slice1 fill:#e8f5e9,stroke:#4caf50,stroke-width:2px
+    style slice2 fill:#e3f2fd,stroke:#2196f3,stroke-width:2px
+    style slice3 fill:#fff3e0,stroke:#ff9800,stroke-width:2px
+    style slice4 fill:#f3e5f5,stroke:#9c27b0,stroke-width:2px
+    style slice5 fill:#fff8e1,stroke:#ffc107,stroke-width:2px
+
+    style primaryClock_v2 fill:transparent,stroke:#888,stroke-width:1px
+    style secondaryClock_v4 fill:transparent,stroke:#888,stroke-width:1px
+
+    classDef ui fill:#ffb6c1,stroke:#d87093,color:#000
+    classDef nonui fill:#d3d3d3,stroke:#808080,color:#000
+    classDef store fill:#e6e6fa,stroke:#9370db,color:#000
+
+    class U1_v2,U2_v2,U3_v2,U4_v2,U5_v4,U6_v4,U7_v4,U8_v4,U9_v5,U10_v5,U11_v5,U12_v5,U13_v5,U14_v5,U15_v5,U16_v5 ui
+    class N1_v2,N2_v2,N3_v2,N4_v2,N5_v2,N6_v1,N7_v3,N8_v2,N9_v2,N10_v4,N11_v2,N12_v5,N13_v5,N14_v5 nonui
+    class S1_v5,S2_v5 store
+```
