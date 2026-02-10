@@ -395,6 +395,82 @@
       assertEqual(loaded[loaded.length - 1].name, "LONDON", "last city should be London");
     });
 
+    // ── buildAndStart with animate=true ──
+    section("buildAndStart animate=true");
+
+    test("buildAndStart with animate=true starts rattle (cells show random digits)", () => {
+      const clockEl = document.getElementById("test-clock");
+      const container = document.getElementById("secondary-container");
+      container.innerHTML = "";
+
+      buildAndStart(clockEl, container, false, [], true);
+
+      return new Promise(resolve => setTimeout(resolve, 100)).then(() => {
+        // During rattle, cells should show random digits (not en-dash)
+        const cells = clockEl.querySelectorAll(".flap-cell");
+        let hasDigit = false;
+        for (const cell of cells) {
+          const text = cell.querySelector(".top-static span").textContent;
+          if ("0123456789".includes(text)) hasDigit = true;
+        }
+        assert(hasDigit, "at least one cell should show a digit during rattle");
+
+        if (_tickInterval) {
+          clearInterval(_tickInterval);
+          _tickInterval = null;
+        }
+      });
+    });
+
+    // ── _tickInterval cleanup ──
+    section("_tickInterval cleanup");
+
+    test("calling buildAndStart twice clears previous interval", () => {
+      const clockEl = document.getElementById("test-clock");
+      const container = document.getElementById("secondary-container");
+      container.innerHTML = "";
+
+      buildAndStart(clockEl, container, false, [], false);
+      const firstInterval = _tickInterval;
+      assert(firstInterval !== null, "first interval should be set");
+
+      buildAndStart(clockEl, container, true, [], false);
+      const secondInterval = _tickInterval;
+      assert(secondInterval !== null, "second interval should be set");
+      assert(firstInterval !== secondInterval, "intervals should differ (old cleared, new created)");
+
+      if (_tickInterval) {
+        clearInterval(_tickInterval);
+        _tickInterval = null;
+      }
+    });
+
+    test("buildAndStart with cities creates secondary clocks", () => {
+      const clockEl = document.getElementById("test-clock");
+      const container = document.getElementById("secondary-container");
+      container.innerHTML = "";
+      const cities = [
+        { name: "LONDON", tz: "Europe/London" },
+        { name: "TOKYO", tz: "Asia/Tokyo" },
+      ];
+
+      buildAndStart(clockEl, container, true, cities, false);
+
+      const secondaryClocks = container.querySelectorAll(".clock.secondary");
+      assertEqual(secondaryClocks.length, 2, "secondary clock count");
+
+      // Each secondary should have 4 cells (no seconds)
+      for (const clock of secondaryClocks) {
+        const cells = clock.querySelectorAll(".flap-cell");
+        assertEqual(cells.length, 4, "secondary cell count");
+      }
+
+      if (_tickInterval) {
+        clearInterval(_tickInterval);
+        _tickInterval = null;
+      }
+    });
+
     // Clean up
     clearStorage();
   </script>

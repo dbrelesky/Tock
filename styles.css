@@ -44,6 +44,12 @@ body {
   line-height: 1;
   padding: 0 2px;
   user-select: none;
+  animation: colon-pulse 2s ease-in-out infinite;
+}
+
+@keyframes colon-pulse {
+  0%, 100% { opacity: 0.4; }
+  50%      { opacity: 0.9; }
 }
 
 .period-label {
@@ -306,7 +312,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .day-badge {

@@ -86,6 +86,30 @@
   <script src="../flap.js"></script>
 
   <script>
+    // ── createFlapCell ──
+
+    test("createFlapCell returns a .flap-cell element", () => {
+      const cell = createFlapCell();
+      assert(cell instanceof HTMLElement, "should return an element");
+      assert(cell.classList.contains("flap-cell"), "should have .flap-cell class");
+    });
+
+    test("createFlapCell has four layers with spans", () => {
+      const cell = createFlapCell();
+      assert(cell.querySelector(".top-static span"), "missing top-static span");
+      assert(cell.querySelector(".bottom-static span"), "missing bottom-static span");
+      assert(cell.querySelector(".top-flap span"), "missing top-flap span");
+      assert(cell.querySelector(".bottom-flap span"), "missing bottom-flap span");
+    });
+
+    test("createFlapCell layers start with en-dash", () => {
+      const cell = createFlapCell();
+      assertEqual(cell.querySelector(".top-static span").textContent, "\u2013", "top-static");
+      assertEqual(cell.querySelector(".bottom-static span").textContent, "\u2013", "bottom-static");
+      assertEqual(cell.querySelector(".top-flap span").textContent, "\u2013", "top-flap");
+      assertEqual(cell.querySelector(".bottom-flap span").textContent, "\u2013", "bottom-flap");
+    });
+
     // ── triggerFlip layer setup ──
 
     test("sets top-static to new char", () => {
