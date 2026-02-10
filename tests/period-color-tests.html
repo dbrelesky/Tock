@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Tock — Period Color Tests</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #111; color: #ccc; font-family: "SF Mono", monospace; padding: 2rem; }
+    h1 { font-size: 1rem; margin-bottom: 1rem; color: #e0d8b0; }
+    h2 { font-size: 0.85rem; margin-top: 1rem; margin-bottom: 0.5rem; color: #888; }
+    .pass { color: #4a2; }
+    .fail { color: #d44; }
+    .result { padding: 0.25rem 0; font-size: 0.85rem; }
+    #summary { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #333; font-size: 0.9rem; }
+    .swatch-row { display: flex; gap: 4px; margin: 0.5rem 0; flex-wrap: wrap; }
+    .swatch { width: 32px; height: 20px; border-radius: 2px; display: flex; align-items: center; justify-content: center; font-size: 8px; color: #000; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <h1>flap.js — period color tests</h1>
+  <div id="log"></div>
+  <div id="summary"></div>
+
+  <!-- Hidden test fixture -->
+  <div style="display:none">
+    <div class="clock" id="test-clock">
+      <div class="clock-digits"></div>
+    </div>
+  </div>
+
+  <script>
+    // ── Minimal test runner ──
+    const log = document.getElementById("log");
+    let passed = 0, failed = 0;
+
+    function assert(condition, msg) {
+      if (!condition) throw new Error(msg);
+    }
+
+    function assertEqual(actual, expected, msg) {
+      if (actual !== expected) {
+        throw new Error(`${msg}: expected "${expected}", got "${actual}"`);
+      }
+    }
+
+    function test(name, fn) {
+      try {
+        fn();
+        passed++;
+        log.innerHTML += `<div class="result pass">✓ ${name}</div>`;
+      } catch (e) {
+        failed++;
+        log.innerHTML += `<div class="result fail">✗ ${name} — ${e.message}</div>`;
+      }
+    }
+
+    function section(name) {
+      log.innerHTML += `<h2>${name}</h2>`;
+    }
+  </script>
+
+  <!-- Load flap.js -->
+  <script src="../flap.js"></script>
+
+  <script>
+    // ── PERIOD_COLORS array ──
+    section("PERIOD_COLORS array");
+
+    test("PERIOD_COLORS has exactly 24 entries", () => {
+      assertEqual(PERIOD_COLORS.length, 24, "array length");
+    });
+
+    test("all entries are valid hex color strings", () => {
+      const hexPattern = /^#[0-9a-fA-F]{6}$/;
+      for (let i = 0; i < PERIOD_COLORS.length; i++) {
+        assert(hexPattern.test(PERIOD_COLORS[i]),
+          `PERIOD_COLORS[${i}] = "${PERIOD_COLORS[i]}" is not a valid hex color`);
+      }
+    });
+
+    test("no duplicate colors in the array", () => {
+      const unique = new Set(PERIOD_COLORS);
+      assertEqual(unique.size, PERIOD_COLORS.length, "unique count");
+    });
+
+    // ── getPeriodColor ──
+    section("getPeriodColor");
+
+    test("returns a color for every hour 0–23", () => {
+      for (let h = 0; h < 24; h++) {
+        const color = getPeriodColor(h);
+        assert(typeof color === "string" && color.startsWith("#"),
+          `hour ${h}: expected hex string, got "${color}"`);
+      }
+    });
+
+    test("returns fallback for out-of-range hour", () => {
+      const color = getPeriodColor(24);
+      assertEqual(color, PERIOD_COLORS[0], "hour 24 should fallback to index 0");
+    });
+
+    test("returns fallback for negative hour", () => {
+      const color = getPeriodColor(-1);
+      assertEqual(color, PERIOD_COLORS[0], "hour -1 should fallback to index 0");
+    });
+
+    test("daytime hours (6–17) return warm-toned colors", () => {
+      // Warm colors have higher red channel relative to blue
+      for (let h = 6; h <= 17; h++) {
+        const hex = getPeriodColor(h);
+        const r = parseInt(hex.slice(1, 3), 16);
+        const b = parseInt(hex.slice(5, 7), 16);
+        assert(r > b, `hour ${h}: red (${r}) should exceed blue (${b}) for warm tone`);
+      }
+    });
+
+    test("nighttime hours (18–5) return cool-toned colors", () => {
+      // Cool colors have higher blue channel relative to red
+      const nightHours = [18, 19, 20, 21, 22, 23, 0, 1, 2, 3, 4, 5];
+      for (const h of nightHours) {
+        const hex = getPeriodColor(h);
+        const r = parseInt(hex.slice(1, 3), 16);
+        const b = parseInt(hex.slice(5, 7), 16);
+        assert(b >= r, `hour ${h}: blue (${b}) should be >= red (${r}) for cool tone`);
+      }
+    });
+
+    // ── getHour24ForZone ──
+    section("getHour24ForZone");
+
+    test("returns a number between 0 and 23", () => {
+      const h = getHour24ForZone("America/New_York");
+      assert(typeof h === "number", "should be a number");
+      assert(h >= 0 && h <= 23, `hour ${h} should be 0–23`);
+      assert(Number.isInteger(h), `hour ${h} should be an integer`);
+    });
+
+    test("works with different timezones", () => {
+      const nyc = getHour24ForZone("America/New_York");
+      const tokyo = getHour24ForZone("Asia/Tokyo");
+      const london = getHour24ForZone("Europe/London");
+
+      // All should be valid hours
+      assert(nyc >= 0 && nyc <= 23, `NYC hour ${nyc} in range`);
+      assert(tokyo >= 0 && tokyo <= 23, `Tokyo hour ${tokyo} in range`);
+      assert(london >= 0 && london <= 23, `London hour ${london} in range`);
+    });
+
+    test("hour is consistent with getTimeForZone period", () => {
+      const tz = "America/New_York";
+      const h24 = getHour24ForZone(tz);
+      const { period } = getTimeForZone(tz);
+
+      if (h24 >= 12) {
+        assertEqual(period, "PM", `hour ${h24} should be PM`);
+      } else {
+        assertEqual(period, "AM", `hour ${h24} should be AM`);
+      }
+    });
+
+    // ── applyPeriodColor ──
+    section("applyPeriodColor");
+
+    test("sets inline color style on element", () => {
+      const el = document.createElement("div");
+      applyPeriodColor(el, "America/New_York");
+      assert(el.style.color !== "", "style.color should be set");
+    });
+
+    test("color matches getPeriodColor for the timezone's hour", () => {
+      const el = document.createElement("div");
+      const tz = "America/New_York";
+      applyPeriodColor(el, tz);
+
+      const h = getHour24ForZone(tz);
+      const expected = getPeriodColor(h);
+
+      // Browser normalizes hex to rgb, so compare via a reference element
+      const ref = document.createElement("div");
+      ref.style.color = expected;
+      assertEqual(el.style.color, ref.style.color, "colors should match");
+    });
+
+    test("applies different colors for different timezones with different hours", () => {
+      // Find two timezones with different current hours
+      const el1 = document.createElement("div");
+      const el2 = document.createElement("div");
+      const tz1 = "America/New_York";
+      const tz2 = "Asia/Tokyo"; // typically 13-14 hours ahead
+
+      applyPeriodColor(el1, tz1);
+      applyPeriodColor(el2, tz2);
+
+      const h1 = getHour24ForZone(tz1);
+      const h2 = getHour24ForZone(tz2);
+
+      // If hours differ, colors should differ
+      if (h1 !== h2) {
+        assert(el1.style.color !== el2.style.color,
+          `different hours (${h1} vs ${h2}) should have different colors`);
+      }
+    });
+
+    // ── Integration: renderClock + applyPeriodColor ──
+    section("integration: period color on rendered clock");
+
+    test("period label accepts inline color after renderClock", () => {
+      const clockEl = document.getElementById("test-clock");
+      const { periodEl } = renderClock(clockEl, true);
+      periodEl.textContent = "AM";
+      applyPeriodColor(periodEl, "America/New_York");
+
+      assert(periodEl.style.color !== "", "period label should have inline color");
+      assert(periodEl.classList.contains("period-label"), "still has period-label class");
+    });
+
+    // ── Color gradient visual coherence ──
+    section("color gradient coherence");
+
+    test("daytime colors get progressively warmer (red increases, 6→12)", () => {
+      // Check that the warmth generally increases from dawn to midday
+      const dawnR = parseInt(PERIOD_COLORS[6].slice(1, 3), 16);
+      const noonR = parseInt(PERIOD_COLORS[12].slice(1, 3), 16);
+      // Noon should be at least as warm as dawn (red channel comparable)
+      assert(noonR >= dawnR - 20,
+        `noon red (${noonR}) should be close to or exceed dawn red (${dawnR})`);
+    });
+
+    test("nighttime colors are distinctly different from daytime colors", () => {
+      // Average blue channel for day vs night
+      let dayBlueSum = 0, nightBlueSum = 0;
+      for (let h = 6; h <= 17; h++) {
+        dayBlueSum += parseInt(PERIOD_COLORS[h].slice(5, 7), 16);
+      }
+      for (let h = 18; h <= 23; h++) {
+        nightBlueSum += parseInt(PERIOD_COLORS[h].slice(5, 7), 16);
+      }
+      for (let h = 0; h <= 5; h++) {
+        nightBlueSum += parseInt(PERIOD_COLORS[h].slice(5, 7), 16);
+      }
+
+      const dayAvg = dayBlueSum / 12;
+      const nightAvg = nightBlueSum / 12;
+      assert(nightAvg > dayAvg,
+        `night avg blue (${nightAvg.toFixed(0)}) should exceed day avg blue (${dayAvg.toFixed(0)})`);
+    });
+
+    // ── Visual swatch display ──
+    section("visual: 24-hour color gradient");
+    const swatchContainer = document.createElement("div");
+    swatchContainer.className = "swatch-row";
+    for (let h = 0; h < 24; h++) {
+      const swatch = document.createElement("div");
+      swatch.className = "swatch";
+      swatch.style.background = PERIOD_COLORS[h];
+      swatch.textContent = h;
+      swatch.title = `Hour ${h}: ${PERIOD_COLORS[h]}`;
+      swatchContainer.appendChild(swatch);
+    }
+    log.appendChild(swatchContainer);
+
+    // ── Summary ──
+    const total = passed + failed;
+    const summary = document.getElementById("summary");
+    summary.className = failed ? "fail" : "pass";
+    summary.textContent = `${passed}/${total} passed` + (failed ? ` — ${failed} failed` : "");
+  </script>
+</body>
+</html>

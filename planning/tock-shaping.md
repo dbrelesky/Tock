@@ -42,6 +42,7 @@
 | R14 | 🟡 Day-of-week shown for cities where the date differs from NYC (e.g., Auckland showing "TUE") | Must-have |
 | R15 | 🟡 City labels displayed in ALL CAPS | Must-have |
 | R16 | 🟡 Power-on cascade animation on page load/refresh — flaps flip into place as if the board is starting up | Must-have |
+| R17 | 🟡 AM/PM label color gradient — each hour of the 24-hour day maps to a unique color. Daytime (6 AM–5:59 PM): warm tones from soft gold through amber to muted rust. Nighttime (6 PM–5:59 AM): cool tones from slate blue through navy to soft indigo. Applied per-location based on local time. | Must-have |
 
 ---
 
@@ -59,6 +60,7 @@
 | **A6** | **Dark shell** — dark background (`#1a1a1a` or similar), minimal page chrome, monospace/terminal font (e.g., system mono or a web-safe equivalent to keep load fast). Layout: primary clock centered top, secondary clocks row centered below with even spacing. Responsive: stacks vertically on narrow screens. | |
 | **A7** | **Admin panel** — hidden drawer/overlay toggled by a subtle trigger (e.g., gear icon in corner, or tap a hidden hotspot). Contains: (1) seconds toggle for primary clock, (2) city list with remove buttons, (3) add-city input (city name + IANA timezone picker or autocomplete). Changes persist to localStorage immediately. Panel slides in/out without disrupting clock layout. | |
 | **A8** | 🟡 **Power-on cascade** — on page load/refresh, all flap digits start blank and flip into their current values with a staggered delay (left-to-right, primary clock first, then secondary clocks). Each digit triggers its flip animation with a 30–80ms offset from the previous, simulating a Solari board powering on. Runs once on init, then normal tick loop takes over. | |
+| **A9** | 🟡 **Period color gradient** — `PERIOD_COLORS` array maps each of 24 hours to a hex color. `getHour24ForZone(tz)` extracts 24-hour value via `Intl.DateTimeFormat`. `getPeriodColor(hour24)` returns the mapped color. `applyPeriodColor(periodEl, tz)` sets inline `style.color` on the AM/PM label. Daytime hours (6–17) use warm gold→amber→rust. Nighttime hours (18–5) use slate blue→navy→indigo. Applied on init, on settings change, and each tick. | |
 
 ---
 
@@ -83,6 +85,7 @@
 | R14 | 🟡 Day-of-week shown for cities where the date differs from NYC (e.g., Auckland showing "TUE") | Must-have | ✅ |
 | R15 | 🟡 City labels displayed in ALL CAPS | Must-have | ✅ |
 | R16 | 🟡 Power-on cascade animation on page load/refresh — flaps flip into place as if the board is starting up | Must-have | ✅ |
+| R17 | 🟡 AM/PM label color gradient — hour-based warm/cool tones per location | Must-have | ✅ |
 
 **Notes:**
 - R5 resolved via A1 spike. See `spike-flip-physics.md`.
@@ -93,6 +96,7 @@
 - 🟡 R14 satisfied by A4 (compares weekday of city vs NYC, shows day abbreviation when different).
 - 🟡 R15 satisfied by A3 and A4 (ALL CAPS city labels).
 - 🟡 R16 satisfied by A8 (power-on cascade with staggered flap init).
+- 🟡 R17 satisfied by A9 (period color gradient — `PERIOD_COLORS` + `applyPeriodColor()` wired into init, settings change, and tick loop).
 
 ---
 
@@ -100,16 +104,17 @@
 
 Parts as rows, requirements as columns. Shows which parts satisfy which requirements.
 
-| Part | R0 | R1 | R2 | R3 | R4 | R5 | R6 | R7 | R8 | R9 | R10 | R11 | R12 | R13 | R14 | R15 | R16 |
-|------|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| **A1** Flap digit | | | | | ✅ | ✅ | | | | | | | | | | | |
-| **A2** Clock assembly | | | ✅ | | ✅ | | | | | | | | | ✅ | | | |
-| **A3** Primary NYC | ✅ | | | | | | | | | | | | | | | ✅ | |
-| **A4** Secondary row | | ✅ | | | | | | | | | | ✅ | ✅ | | ✅ | ✅ | |
-| **A5** Tick loop | | | ✅ | | | | | | ✅ | | | | | | | | |
-| **A6** Dark shell | | | | ✅ | | | | | ✅ | | | | | | | | |
-| **A7** Admin panel | | | | | | | ✅ | ✅ | | ✅ | ✅ | ✅ | | | | | |
-| **A8** Power-on cascade | | | | | ✅ | | | | | | | | | | | | ✅ |
+| Part | R0 | R1 | R2 | R3 | R4 | R5 | R6 | R7 | R8 | R9 | R10 | R11 | R12 | R13 | R14 | R15 | R16 | R17 |
+|------|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| **A1** Flap digit | | | | | ✅ | ✅ | | | | | | | | | | | | |
+| **A2** Clock assembly | | | ✅ | | ✅ | | | | | | | | | ✅ | | | | |
+| **A3** Primary NYC | ✅ | | | | | | | | | | | | | | | ✅ | | |
+| **A4** Secondary row | | ✅ | | | | | | | | | | ✅ | ✅ | | ✅ | ✅ | | |
+| **A5** Tick loop | | | ✅ | | | | | | ✅ | | | | | | | | | |
+| **A6** Dark shell | | | | ✅ | | | | | ✅ | | | | | | | | | |
+| **A7** Admin panel | | | | | | | ✅ | ✅ | | ✅ | ✅ | ✅ | | | | | | |
+| **A8** Power-on cascade | | | | | ✅ | | | | | | | | | | | | ✅ | |
+| **A9** Period color gradient | | | | | | | | | | | | | | | | | | ✅ |
 
 ---
 
@@ -317,6 +322,7 @@ Strategy: **prove the hard parts first** — the split-flap animation and real-t
 | V3 | Power-on cascade | A8 | N7 | Refresh page — digits cascade from blank into current time with staggered delays |
 | V4 | Secondary clocks | A4 | U5–U8, N10, S1 (read-only defaults) | Four smaller clocks below NYC, Auckland shows "TUE" when date differs |
 | V5 | Admin panel | A7 | U9–U16, N12–N14, S1, S2 | Open admin, toggle seconds, add/remove cities, refresh — everything persists |
+| V6 | Period color gradient | A9 | N15–N18 | AM/PM labels show warm gold tones during day, cool blue/indigo at night — per location |
 
 ### Slice Details
 
@@ -404,6 +410,21 @@ Build the P2 overlay: gear icon trigger in corner of P1, slide-in drawer. Second
 | S2 | `localStorage:showSeconds` | store | — | → N3 |
 
 *Demo: Click gear icon. Toggle seconds off — seconds digits disappear from NYC clock. Add "London" with `Europe/London`. Remove "Nashville." Close admin. Refresh — changes persisted.*
+
+---
+
+**V6: Period color gradient** — *Subtle time-of-day color coding on AM/PM labels*
+
+Each AM/PM label shows a color that reflects the local hour of that city. Daytime hours (6 AM–5:59 PM) use warm tones: soft gold at sunrise → rich amber at noon → muted rust at dusk. Nighttime hours (6 PM–5:59 AM) use cool tones: slate blue at twilight → navy → soft indigo toward dawn. `PERIOD_COLORS[0..23]` is a 24-element hex array. `getHour24ForZone(tz)` extracts the 24-hour value. `applyPeriodColor(periodEl, tz)` sets the inline color. Wired into init, settings change, and tick loop. The effect is subtle — `opacity: 0.7` keeps labels from being overpowering.
+
+| # | Affordance | Control | Wires Out |
+|---|------------|---------|-----------|
+| N15 | `PERIOD_COLORS[0..23]` | data | → N17 |
+| N16 | `getHour24ForZone(tz)` | call | → N18 |
+| N17 | `getPeriodColor(hour24)` | call | → N18 |
+| N18 | `applyPeriodColor(periodEl, tz)` | call | → U2, → U6 |
+
+*Demo: NYC shows warm amber "PM" at noon, cool indigo "AM" at 2 AM. Auckland at 3 AM shows deep lavender while LA at noon shows golden amber — all visible simultaneously.*
 
 ### Sliced Breadboard
 
