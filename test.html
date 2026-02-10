@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Tock — Tests</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #111; color: #ccc; font-family: "SF Mono", monospace; padding: 2rem; }
+    h1 { font-size: 1rem; margin-bottom: 1rem; color: #e0d8b0; }
+    .pass { color: #4a2; }
+    .fail { color: #d44; }
+    .result { padding: 0.25rem 0; font-size: 0.85rem; }
+    #summary { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #333; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <h1>flap.js tests</h1>
+  <div id="log"></div>
+  <div id="summary"></div>
+
+  <!-- Hidden test fixture — same structure as index.html -->
+  <div style="display:none">
+    <div class="flap-cell" id="test-digit">
+      <div class="half top-static"><span>0</span></div>
+      <div class="half bottom-static"><span>0</span></div>
+      <div class="flap top-flap"><span>0</span></div>
+      <div class="flap bottom-flap"><span>0</span></div>
+    </div>
+  </div>
+
+  <script>
+    // ── Minimal test runner ──
+    const log = document.getElementById("log");
+    let passed = 0, failed = 0;
+
+    function assert(condition, msg) {
+      if (!condition) throw new Error(msg);
+    }
+
+    function assertEqual(actual, expected, msg) {
+      if (actual !== expected) {
+        throw new Error(`${msg}: expected "${expected}", got "${actual}"`);
+      }
+    }
+
+    function test(name, fn) {
+      try {
+        fn();
+        passed++;
+        log.innerHTML += `<div class="result pass">✓ ${name}</div>`;
+      } catch (e) {
+        failed++;
+        log.innerHTML += `<div class="result fail">✗ ${name} — ${e.message}</div>`;
+      }
+    }
+
+    // ── Helpers ──
+    const cell = document.getElementById("test-digit");
+
+    function resetCell() {
+      isFlipping = false;
+      cell.classList.remove("flipping");
+      cell.querySelector(".top-static span").textContent = "0";
+      cell.querySelector(".bottom-static span").textContent = "0";
+      cell.querySelector(".top-flap span").textContent = "0";
+      cell.querySelector(".bottom-flap span").textContent = "0";
+      cell.querySelector(".top-flap").style.transform = "";
+      cell.querySelector(".bottom-flap").style.transform = "";
+    }
+
+    function fireAnimationEnd() {
+      cell.querySelector(".bottom-flap").dispatchEvent(new Event("animationend"));
+    }
+
+    function layers() {
+      return {
+        topStatic:    cell.querySelector(".top-static span").textContent,
+        bottomStatic: cell.querySelector(".bottom-static span").textContent,
+        topFlap:      cell.querySelector(".top-flap span").textContent,
+        bottomFlap:   cell.querySelector(".bottom-flap span").textContent,
+      };
+    }
+  </script>
+
+  <!-- Load the real flap.js (demo timer targets #digit which doesn't exist here) -->
+  <script src="flap.js"></script>
+
+  <script>
+    // ── triggerFlip layer setup ──
+
+    test("sets top-static to new char", () => {
+      resetCell();
+      triggerFlip(cell, "0", "1");
+      assertEqual(layers().topStatic, "1", "top-static");
+    });
+
+    test("sets top-flap to old char (the card that falls)", () => {
+      resetCell();
+      triggerFlip(cell, "0", "1");
+      assertEqual(layers().topFlap, "0", "top-flap");
+    });
+
+    test("sets bottom-flap to new char (the card that lands)", () => {
+      resetCell();
+      triggerFlip(cell, "0", "1");
+      assertEqual(layers().bottomFlap, "1", "bottom-flap");
+    });
+
+    test("keeps bottom-static as old char during flip", () => {
+      resetCell();
+      triggerFlip(cell, "0", "1");
+      assertEqual(layers().bottomStatic, "0", "bottom-static");
+    });
+
+    test("adds .flipping class", () => {
+      resetCell();
+      triggerFlip(cell, "0", "1");
+      assert(cell.classList.contains("flipping"), "missing .flipping class");
+    });
+
+    // ── isFlipping guard ──
+
+    test("blocks concurrent flips", () => {
+      resetCell();
+      triggerFlip(cell, "0", "1");
+      triggerFlip(cell, "1", "2"); // should be ignored
+      assertEqual(layers().topStatic, "1", "top-static unchanged by second call");
+      assertEqual(layers().topFlap, "0", "top-flap unchanged by second call");
+    });
+
+    // ── animationend cleanup ──
+
+    test("updates bottom-static to new char on animationend", () => {
+      resetCell();
+      triggerFlip(cell, "0", "1");
+      fireAnimationEnd();
+      assertEqual(layers().bottomStatic, "1", "bottom-static");
+    });
+
+    test("removes .flipping class on animationend", () => {
+      resetCell();
+      triggerFlip(cell, "0", "1");
+      fireAnimationEnd();
+      assert(!cell.classList.contains("flipping"), ".flipping should be removed");
+    });
+
+    test("clears inline transform on top-flap", () => {
+      resetCell();
+      triggerFlip(cell, "0", "1");
+      cell.querySelector(".top-flap").style.transform = "rotateX(-90deg)";
+      fireAnimationEnd();
+      assertEqual(cell.querySelector(".top-flap").style.transform, "", "top-flap transform");
+    });
+
+    test("clears inline transform on bottom-flap", () => {
+      resetCell();
+      triggerFlip(cell, "0", "1");
+      cell.querySelector(".bottom-flap").style.transform = "rotateX(0deg)";
+      fireAnimationEnd();
+      assertEqual(cell.querySelector(".bottom-flap").style.transform, "", "bottom-flap transform");
+    });
+
+    test("syncs top-flap to new char (ready for next flip)", () => {
+      resetCell();
+      triggerFlip(cell, "0", "1");
+      fireAnimationEnd();
+      assertEqual(layers().topFlap, "1", "top-flap");
+    });
+
+    test("resets isFlipping after animationend", () => {
+      resetCell();
+      triggerFlip(cell, "0", "1");
+      assert(isFlipping === true, "should be true during flip");
+      fireAnimationEnd();
+      assert(isFlipping === false, "should be false after animationend");
+    });
+
+    // ── Sequential flips ──
+
+    test("chains multiple flips correctly", () => {
+      resetCell();
+      triggerFlip(cell, "0", "1"); fireAnimationEnd();
+      triggerFlip(cell, "1", "2"); fireAnimationEnd();
+      triggerFlip(cell, "2", "3"); fireAnimationEnd();
+      const l = layers();
+      assertEqual(l.topStatic, "3", "topStatic");
+      assertEqual(l.bottomStatic, "3", "bottomStatic");
+      assertEqual(l.topFlap, "3", "topFlap");
+    });
+
+    test("handles 9 → 0 wrap-around", () => {
+      resetCell();
+      triggerFlip(cell, "9", "0"); fireAnimationEnd();
+      assertEqual(layers().topStatic, "0", "topStatic");
+      assertEqual(layers().bottomStatic, "0", "bottomStatic");
+    });
+
+    // ── Summary ──
+    const total = passed + failed;
+    const summary = document.getElementById("summary");
+    summary.className = failed ? "fail" : "pass";
+    summary.textContent = `${passed}/${total} passed` + (failed ? ` — ${failed} failed` : "");
+  </script>
+</body>
+</html>
