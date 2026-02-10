@@ -3,17 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tock — Split-Flap Digit</title>
+  <title>Tock — Split-Flap Clock</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="flap-cell" id="digit">
-    <!-- Static layers (always visible, behind flaps) -->
-    <div class="half top-static"><span>0</span></div>
-    <div class="half bottom-static"><span>0</span></div>
-    <!-- Animated flap layers -->
-    <div class="flap top-flap"><span>0</span></div>
-    <div class="flap bottom-flap"><span>0</span></div>
+  <div class="clock" id="clock">
+    <div class="city-label">NEW YORK</div>
+    <div class="clock-digits">
+      <!-- Built dynamically by renderClock() -->
+    </div>
   </div>
 
   <script src="flap.js"></script>

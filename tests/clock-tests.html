@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Tock — Clock Tests</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #111; color: #ccc; font-family: "SF Mono", monospace; padding: 2rem; }
+    h1 { font-size: 1rem; margin-bottom: 1rem; color: #e0d8b0; }
+    h2 { font-size: 0.85rem; margin-top: 1rem; margin-bottom: 0.5rem; color: #888; }
+    .pass { color: #4a2; }
+    .fail { color: #d44; }
+    .result { padding: 0.25rem 0; font-size: 0.85rem; }
+    #summary { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #333; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <h1>flap.js — clock tests</h1>
+  <div id="log"></div>
+  <div id="summary"></div>
+
+  <!-- Hidden test fixtures -->
+  <div style="display:none">
+    <div class="clock" id="test-clock">
+      <div class="clock-digits"></div>
+    </div>
+    <div class="clock" id="test-clock-2">
+      <div class="clock-digits"></div>
+    </div>
+  </div>
+
+  <script>
+    // ── Minimal test runner ──
+    const log = document.getElementById("log");
+    let passed = 0, failed = 0;
+
+    function assert(condition, msg) {
+      if (!condition) throw new Error(msg);
+    }
+
+    function assertEqual(actual, expected, msg) {
+      if (actual !== expected) {
+        throw new Error(`${msg}: expected "${expected}", got "${actual}"`);
+      }
+    }
+
+    function assertDeepEqual(actual, expected, msg) {
+      const a = JSON.stringify(actual);
+      const b = JSON.stringify(expected);
+      if (a !== b) {
+        throw new Error(`${msg}: expected ${b}, got ${a}`);
+      }
+    }
+
+    function test(name, fn) {
+      try {
+        fn();
+        passed++;
+        log.innerHTML += `<div class="result pass">✓ ${name}</div>`;
+      } catch (e) {
+        failed++;
+        log.innerHTML += `<div class="result fail">✗ ${name} — ${e.message}</div>`;
+      }
+    }
+
+    function section(name) {
+      log.innerHTML += `<h2>${name}</h2>`;
+    }
+  </script>
+
+  <!-- Load flap.js (init() exits early — no #clock element with correct structure) -->
+  <script src="../flap.js"></script>
+
+  <script>
+    // ── getTimeForZone ──
+    section("getTimeForZone");
+
+    test("returns object with digits array and period string", () => {
+      const result = getTimeForZone("America/New_York");
+      assert(Array.isArray(result.digits), "digits should be an array");
+      assertEqual(result.digits.length, 6, "digits length");
+      assert(typeof result.period === "string", "period should be a string");
+    });
+
+    test("digits are all single characters", () => {
+      const { digits } = getTimeForZone("America/New_York");
+      for (let i = 0; i < digits.length; i++) {
+        assertEqual(digits[i].length, 1, `digit[${i}] length`);
+      }
+    });
+
+    test("period is AM or PM", () => {
+      const { period } = getTimeForZone("America/New_York");
+      assert(period === "AM" || period === "PM", `period should be AM or PM, got "${period}"`);
+    });
+
+    test("minute and second digits are 0-5 (tens) and 0-9 (ones)", () => {
+      const { digits } = getTimeForZone("America/New_York");
+      // m10 at index 2, s10 at index 4
+      assert("012345".includes(digits[2]), `m10 "${digits[2]}" not in range 0-5`);
+      assert("0123456789".includes(digits[3]), `m1 "${digits[3]}" not in range 0-9`);
+      assert("012345".includes(digits[4]), `s10 "${digits[4]}" not in range 0-5`);
+      assert("0123456789".includes(digits[5]), `s1 "${digits[5]}" not in range 0-9`);
+    });
+
+    test("works with different timezones", () => {
+      const tokyo = getTimeForZone("Asia/Tokyo");
+      assert(Array.isArray(tokyo.digits), "Tokyo digits should be an array");
+      assertEqual(tokyo.digits.length, 6, "Tokyo digits length");
+
+      const london = getTimeForZone("Europe/London");
+      assert(Array.isArray(london.digits), "London digits should be an array");
+    });
+
+    // ── diffDigits ──
+    section("diffDigits");
+
+    test("returns all indices when prev is null", () => {
+      const result = diffDigits(null, ["1", "2", "3", "0", "4", "5"]);
+      assertDeepEqual(result, [0, 1, 2, 3, 4, 5], "all indices");
+    });
+
+    test("returns empty array when nothing changed", () => {
+      const digits = ["1", "2", "3", "0", "4", "5"];
+      const result = diffDigits(digits, [...digits]);
+      assertDeepEqual(result, [], "no changes");
+    });
+
+    test("returns only changed indices", () => {
+      const prev = ["1", "2", "3", "0", "4", "5"];
+      const curr = ["1", "2", "3", "0", "4", "6"];
+      const result = diffDigits(prev, curr);
+      assertDeepEqual(result, [5], "only last digit changed");
+    });
+
+    test("detects multiple changes (minute rollover)", () => {
+      const prev = ["1", "2", "5", "9", "5", "9"];
+      const curr = ["1", "3", "0", "0", "0", "0"];
+      const result = diffDigits(prev, curr);
+      assertDeepEqual(result, [1, 2, 3, 4, 5], "minute+second rollover");
+    });
+
+    test("detects single seconds tick", () => {
+      const prev = ["1", "2", "3", "0", "4", "5"];
+      const curr = ["1", "2", "3", "0", "4", "6"];
+      const result = diffDigits(prev, curr);
+      assertDeepEqual(result, [5], "only s1 changed");
+    });
+
+    test("detects seconds tens rollover (09→10)", () => {
+      const prev = ["1", "2", "3", "0", "0", "9"];
+      const curr = ["1", "2", "3", "0", "1", "0"];
+      const result = diffDigits(prev, curr);
+      assertDeepEqual(result, [4, 5], "s10 and s1 changed");
+    });
+
+    // ── renderClock ──
+    section("renderClock");
+
+    test("creates 6 flap cells with showSeconds=true", () => {
+      const clockEl = document.getElementById("test-clock");
+      const { cells } = renderClock(clockEl, true);
+      assertEqual(cells.length, 6, "cell count");
+    });
+
+    test("creates 4 flap cells with showSeconds=false", () => {
+      const clockEl = document.getElementById("test-clock-2");
+      const { cells } = renderClock(clockEl, false);
+      assertEqual(cells.length, 4, "cell count");
+    });
+
+    test("creates colon separators", () => {
+      const clockEl = document.getElementById("test-clock");
+      renderClock(clockEl, true);
+      const colons = clockEl.querySelectorAll(".colon-separator");
+      assertEqual(colons.length, 2, "colon count with seconds");
+    });
+
+    test("creates 1 colon without seconds", () => {
+      const clockEl = document.getElementById("test-clock-2");
+      renderClock(clockEl, false);
+      const colons = clockEl.querySelectorAll(".colon-separator");
+      assertEqual(colons.length, 1, "colon count without seconds");
+    });
+
+    test("creates period label", () => {
+      const clockEl = document.getElementById("test-clock");
+      const { periodEl } = renderClock(clockEl, true);
+      assert(periodEl !== null, "periodEl exists");
+      assert(periodEl.classList.contains("period-label"), "has period-label class");
+    });
+
+    test("each cell has four-layer structure", () => {
+      const clockEl = document.getElementById("test-clock");
+      const { cells } = renderClock(clockEl, true);
+      for (let i = 0; i < cells.length; i++) {
+        assert(cells[i].querySelector(".top-static span"), `cell[${i}] missing top-static span`);
+        assert(cells[i].querySelector(".bottom-static span"), `cell[${i}] missing bottom-static span`);
+        assert(cells[i].querySelector(".top-flap span"), `cell[${i}] missing top-flap span`);
+        assert(cells[i].querySelector(".bottom-flap span"), `cell[${i}] missing bottom-flap span`);
+      }
+    });
+
+    test("initial text is en-dash on all layers", () => {
+      const clockEl = document.getElementById("test-clock");
+      const { cells } = renderClock(clockEl, true);
+      for (let i = 0; i < cells.length; i++) {
+        assertEqual(cells[i].querySelector(".top-static span").textContent, "\u2013", `cell[${i}] top-static`);
+        assertEqual(cells[i].querySelector(".bottom-static span").textContent, "\u2013", `cell[${i}] bottom-static`);
+        assertEqual(cells[i].querySelector(".top-flap span").textContent, "\u2013", `cell[${i}] top-flap`);
+        assertEqual(cells[i].querySelector(".bottom-flap span").textContent, "\u2013", `cell[${i}] bottom-flap`);
+      }
+    });
+
+    // ── setAllDigits ──
+    section("setAllDigits");
+
+    test("sets all four layers of each cell", () => {
+      const clockEl = document.getElementById("test-clock");
+      const { cells } = renderClock(clockEl, true);
+      setAllDigits(cells, ["1", "2", "3", "4", "5", "6"]);
+      for (let i = 0; i < cells.length; i++) {
+        const expected = String(i + 1);
+        assertEqual(cells[i].querySelector(".top-static span").textContent, expected, `cell[${i}] top-static`);
+        assertEqual(cells[i].querySelector(".bottom-static span").textContent, expected, `cell[${i}] bottom-static`);
+        assertEqual(cells[i].querySelector(".top-flap span").textContent, expected, `cell[${i}] top-flap`);
+        assertEqual(cells[i].querySelector(".bottom-flap span").textContent, expected, `cell[${i}] bottom-flap`);
+      }
+    });
+
+    // ── Integration: diffDigits + triggerFlip ──
+    section("integration");
+
+    test("tick cycle: only changed digits get .flipping class", () => {
+      const clockEl = document.getElementById("test-clock");
+      const { cells } = renderClock(clockEl, true);
+
+      // Simulate first tick (instant set, no animation)
+      const time1 = ["1", "2", "3", "0", "4", "5"];
+      setAllDigits(cells, time1);
+
+      // Simulate second tick — only s1 changes
+      const time2 = ["1", "2", "3", "0", "4", "6"];
+      const changed = diffDigits(time1, time2);
+      for (const i of changed) {
+        triggerFlip(cells[i], time1[i], time2[i]);
+      }
+
+      // Only cell[5] should be flipping
+      for (let i = 0; i < cells.length; i++) {
+        if (i === 5) {
+          assert(cells[i].classList.contains("flipping"), `cell[${i}] should be flipping`);
+        } else {
+          assert(!cells[i].classList.contains("flipping"), `cell[${i}] should NOT be flipping`);
+        }
+      }
+
+      // Clean up: fire animationend on the flipping cell
+      cells[5].querySelector(".bottom-flap").dispatchEvent(new Event("animationend"));
+    });
+
+    test("multiple cells can flip independently", () => {
+      const clockEl = document.getElementById("test-clock");
+      const { cells } = renderClock(clockEl, true);
+
+      setAllDigits(cells, ["1", "2", "5", "9", "5", "9"]);
+
+      // Simulate rollover: 12:59:59 → 01:00:00
+      const prev = ["1", "2", "5", "9", "5", "9"];
+      const curr = ["\u2007", "1", "0", "0", "0", "0"];
+      const changed = diffDigits(prev, curr);
+
+      for (const i of changed) {
+        triggerFlip(cells[i], prev[i], curr[i]);
+      }
+
+      // All 6 cells should be flipping
+      for (let i = 0; i < cells.length; i++) {
+        assert(cells[i].classList.contains("flipping"), `cell[${i}] should be flipping`);
+      }
+
+      // Clean up
+      for (const cell of cells) {
+        cell.querySelector(".bottom-flap").dispatchEvent(new Event("animationend"));
+      }
+
+      // After animationend, verify digits are correct
+      assertEqual(cells[0].querySelector(".top-static span").textContent, "\u2007", "h10");
+      assertEqual(cells[1].querySelector(".top-static span").textContent, "1", "h1");
+      assertEqual(cells[2].querySelector(".top-static span").textContent, "0", "m10");
+    });
+
+    // ── Summary ──
+    const total = passed + failed;
+    const summary = document.getElementById("summary");
+    summary.className = failed ? "fail" : "pass";
+    summary.textContent = `${passed}/${total} passed` + (failed ? ` — ${failed} failed` : "");
+  </script>
+</body>
+</html>

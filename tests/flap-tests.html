@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Tock — Tests</title>
+  <title>Tock — Flap Tests</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { background: #111; color: #ccc; font-family: "SF Mono", monospace; padding: 2rem; }
@@ -14,11 +14,11 @@
   </style>
 </head>
 <body>
-  <h1>flap.js tests</h1>
+  <h1>flap.js — triggerFlip tests</h1>
   <div id="log"></div>
   <div id="summary"></div>
 
-  <!-- Hidden test fixture — same structure as index.html -->
+  <!-- Hidden test fixture — same structure as a flap cell -->
   <div style="display:none">
     <div class="flap-cell" id="test-digit">
       <div class="half top-static"><span>0</span></div>
@@ -58,7 +58,7 @@
     const cell = document.getElementById("test-digit");
 
     function resetCell() {
-      isFlipping = false;
+      delete cell.dataset.flipping;
       cell.classList.remove("flipping");
       cell.querySelector(".top-static span").textContent = "0";
       cell.querySelector(".bottom-static span").textContent = "0";
@@ -82,8 +82,8 @@
     }
   </script>
 
-  <!-- Load the real flap.js (demo timer targets #digit which doesn't exist here) -->
-  <script src="flap.js"></script>
+  <!-- Load flap.js (init() exits early — no #clock element) -->
+  <script src="../flap.js"></script>
 
   <script>
     // ── triggerFlip layer setup ──
@@ -118,14 +118,20 @@
       assert(cell.classList.contains("flipping"), "missing .flipping class");
     });
 
-    // ── isFlipping guard ──
+    // ── per-cell flip guard ──
 
-    test("blocks concurrent flips", () => {
+    test("blocks concurrent flips on same cell", () => {
       resetCell();
       triggerFlip(cell, "0", "1");
       triggerFlip(cell, "1", "2"); // should be ignored
       assertEqual(layers().topStatic, "1", "top-static unchanged by second call");
       assertEqual(layers().topFlap, "0", "top-flap unchanged by second call");
+    });
+
+    test("sets data-flipping during flip", () => {
+      resetCell();
+      triggerFlip(cell, "0", "1");
+      assertEqual(cell.dataset.flipping, "true", "data-flipping");
     });
 
     // ── animationend cleanup ──
@@ -167,12 +173,12 @@
       assertEqual(layers().topFlap, "1", "top-flap");
     });
 
-    test("resets isFlipping after animationend", () => {
+    test("clears data-flipping after animationend", () => {
       resetCell();
       triggerFlip(cell, "0", "1");
-      assert(isFlipping === true, "should be true during flip");
+      assertEqual(cell.dataset.flipping, "true", "should be set during flip");
       fireAnimationEnd();
-      assert(isFlipping === false, "should be false after animationend");
+      assert(cell.dataset.flipping === undefined, "should be cleared after animationend");
     });
 
     // ── Sequential flips ──

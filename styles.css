@@ -14,22 +14,63 @@ body {
   font-family: "SF Mono", "Menlo", "Consolas", "Liberation Mono", monospace;
 }
 
+/* ── Clock assembly ── */
+.clock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.city-label {
+  color: #e0d8b0;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.clock-digits {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.colon-separator {
+  color: #e0d8b0;
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0 2px;
+  user-select: none;
+}
+
+.period-label {
+  color: #e0d8b0;
+  font-size: 16px;
+  font-weight: 600;
+  margin-left: 12px;
+  align-self: flex-end;
+  padding-bottom: 4px;
+  letter-spacing: 0.05em;
+}
+
 /* ── Flap cell ── */
 .flap-cell {
-  --flap-width: 120px;
-  --flap-height: 160px;
-  --half-height: 79px; /* (160 - 2) / 2 */
+  --flap-width: 60px;
+  --flap-height: 80px;
+  --half-height: 39px; /* (80 - 2) / 2 */
   --gap: 2px;
   --bg: #1a1a1a;
   --bg-bottom: #151515;
   --text-color: #e0d8b0;
-  --font-size: 120px;
+  --font-size: 60px;
 
   position: relative;
   width: var(--flap-width);
   height: var(--flap-height);
   perspective: 400px;
-  border-radius: 6px;
+  border-radius: 4px;
 }
 
 /* ── Shared half-panel style ── */
