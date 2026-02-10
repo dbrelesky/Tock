@@ -1,0 +1,165 @@
+/* ── Dark shell ── */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: #111;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  font-family: "SF Mono", "Menlo", "Consolas", "Liberation Mono", monospace;
+}
+
+/* ── Flap cell ── */
+.flap-cell {
+  --flap-width: 120px;
+  --flap-height: 160px;
+  --half-height: 79px; /* (160 - 2) / 2 */
+  --gap: 2px;
+  --bg: #1a1a1a;
+  --bg-bottom: #151515;
+  --text-color: #e0d8b0;
+  --font-size: 120px;
+
+  position: relative;
+  width: var(--flap-width);
+  height: var(--flap-height);
+  perspective: 400px;
+  border-radius: 6px;
+}
+
+/* ── Shared half-panel style ── */
+.half,
+.flap {
+  position: absolute;
+  width: 100%;
+  height: var(--half-height);
+  overflow: hidden;
+  background: var(--bg);
+  border-radius: 3px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/*
+  Inner span: positioned to cover the FULL cell height within each half.
+  overflow:hidden on the parent clips it to the top or bottom half.
+  This ensures the character aligns identically across all four layers.
+*/
+.half span,
+.flap span {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: var(--flap-height);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-color);
+  font-size: var(--font-size);
+  font-weight: 700;
+}
+
+/* ── Top halves: span starts at top, bottom half clipped ── */
+.top-static,
+.top-flap {
+  top: 0;
+}
+
+.top-static span,
+.top-flap span {
+  top: 0;
+}
+
+/* ── Bottom halves: span shifted up so bottom half of char is visible ── */
+.bottom-static,
+.bottom-flap {
+  bottom: 0;
+  background: var(--bg-bottom);
+}
+
+.bottom-static span,
+.bottom-flap span {
+  bottom: 0;
+}
+
+/* Cast shadow overlay on bottom-static during flip */
+.bottom-static::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.flap-cell.flipping .bottom-static::before {
+  animation: cast-shadow 430ms ease forwards;
+}
+
+/* ── Hinge gap ── */
+.flap-cell::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: var(--gap);
+  transform: translateY(-50%);
+  background: #000;
+  z-index: 5;
+}
+
+/* ── Animated flaps ── */
+.flap {
+  z-index: 2;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.top-flap {
+  transform-origin: 50% 100%; /* hinge at bottom edge */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.bottom-flap {
+  transform-origin: 50% 0%; /* hinge at top edge */
+  transform: rotateX(90deg); /* hidden until flip */
+  box-shadow: 0 -1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* ── Animation triggers ── */
+.flap-cell.flipping .top-flap {
+  animation: flip-top 300ms ease-in forwards;
+}
+
+.flap-cell.flipping .bottom-flap {
+  animation: flip-bottom 300ms ease-out 130ms forwards;
+}
+
+/* ── @keyframes ── */
+
+/* Top flap falls away (gravity: slow start → fast finish) */
+@keyframes flip-top {
+  0%   { transform: rotateX(0deg); }
+  100% { transform: rotateX(-90deg); }
+}
+
+/* Bottom flap lands with overshoot and bounce */
+@keyframes flip-bottom {
+  0%   { transform: rotateX(90deg); }
+  70%  { transform: rotateX(-3deg); }   /* overshoot past flat */
+  85%  { transform: rotateX(1.5deg); }  /* tiny bounce back */
+  100% { transform: rotateX(0deg); }    /* settle */
+}
+
+/* Shadow cast on lower half by the falling flap */
+@keyframes cast-shadow {
+  0%   { opacity: 0; }
+  50%  { opacity: 1; }
+  100% { opacity: 0; }
+}
