@@ -204,3 +204,80 @@ body {
   50%  { opacity: 1; }
   100% { opacity: 0; }
 }
+
+/* ── Clock wall layout ── */
+.clock-wall {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 48px;
+  padding: 2rem;
+}
+
+.secondary-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 32px 40px;
+  max-width: 960px;
+}
+
+/* ── Secondary clock sizing (60% of primary) ── */
+.secondary {
+  gap: 10px;
+}
+
+.secondary .flap-cell {
+  --flap-width: 36px;
+  --flap-height: 48px;
+  --half-height: 23px;
+  --font-size: 36px;
+  perspective: 240px;
+  border-radius: 3px;
+}
+
+.secondary .clock-digits {
+  gap: 5px;
+}
+
+.secondary .colon-separator {
+  font-size: 28px;
+}
+
+.secondary .period-label {
+  font-size: 10px;
+  margin-left: 8px;
+  padding-bottom: 2px;
+}
+
+.secondary .city-label {
+  font-size: 11px;
+}
+
+/* ── City label row (label + day badge) ── */
+.city-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.day-badge {
+  color: #1a1a1a;
+  background: #e0d8b0;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 5px;
+  border-radius: 2px;
+  letter-spacing: 0.05em;
+  font-family: "SF Mono", "Menlo", "Consolas", "Liberation Mono", monospace;
+}
+
+/* ── Responsive: stack secondary on narrow screens ── */
+@media (max-width: 500px) {
+  .secondary-row {
+    flex-direction: column;
+    align-items: center;
+    gap: 32px;
+  }
+}

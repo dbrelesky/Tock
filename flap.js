@@ -203,11 +203,75 @@ function startTickLoop(cells, periodEl, timeZone, showSeconds, initialDigits) {
   setInterval(tick, 1000);
 }
 
+// ── Day utilities ──
+
+function getDayForZone(timeZone) {
+  var now = new Date();
+  var formatter = new Intl.DateTimeFormat("en-US", {
+    weekday: "short",
+    timeZone: timeZone,
+  });
+  return formatter.format(now).toUpperCase();
+}
+
+function getDayOffset(cityTz, referenceTz) {
+  var cityDay = getDayForZone(cityTz);
+  var refDay = getDayForZone(referenceTz);
+  return cityDay !== refDay ? cityDay : null;
+}
+
+// ── Secondary clocks config ──
+
+var DEFAULT_CITIES = [
+  { name: "NASHVILLE", tz: "America/Chicago" },
+  { name: "LOS ANGELES", tz: "America/Los_Angeles" },
+  { name: "AUCKLAND", tz: "Pacific/Auckland" },
+  { name: "TEL AVIV", tz: "Asia/Jerusalem" },
+];
+
 // ── Settings ──
 
 function loadSettings() {
   var stored = localStorage.getItem("tock-showSeconds");
   return stored === null ? true : stored === "true";
+}
+
+// ── Render secondary clock DOM ──
+
+function renderSecondaryClock(container, city) {
+  var clockEl = document.createElement("div");
+  clockEl.className = "clock secondary";
+
+  // City label row: label + day badge
+  var labelRow = document.createElement("div");
+  labelRow.className = "city-label-row";
+
+  var label = document.createElement("span");
+  label.className = "city-label";
+  label.textContent = city.name;
+  labelRow.appendChild(label);
+
+  var dayBadge = document.createElement("span");
+  dayBadge.className = "day-badge";
+  dayBadge.style.display = "none";
+  labelRow.appendChild(dayBadge);
+
+  clockEl.appendChild(labelRow);
+
+  var digitsContainer = document.createElement("div");
+  digitsContainer.className = "clock-digits";
+  clockEl.appendChild(digitsContainer);
+
+  container.appendChild(clockEl);
+
+  var result = renderClock(clockEl, false);
+  return {
+    cells: result.cells,
+    periodEl: result.periodEl,
+    dayBadgeEl: dayBadge,
+    tz: city.tz,
+    clockEl: clockEl,
+  };
 }
 
 // ── Init (only runs on index.html, not test pages) ──
@@ -217,17 +281,90 @@ async function init() {
   if (!clockEl) return;
 
   var showSeconds = loadSettings();
-  var { cells, periodEl } = renderClock(clockEl, showSeconds);
+  var primaryResult = renderClock(clockEl, showSeconds);
+  var primaryCells = primaryResult.cells;
+  var primaryPeriodEl = primaryResult.periodEl;
 
-  // Get current time for cascade
-  var time = getTimeForZone("America/New_York");
-  var digits = showSeconds ? time.digits : time.digits.slice(0, 4);
+  // Render secondary clocks
+  var secondaryContainer = document.getElementById("secondary-clocks");
+  var secondaryClocks = [];
+  for (var i = 0; i < DEFAULT_CITIES.length; i++) {
+    secondaryClocks.push(renderSecondaryClock(secondaryContainer, DEFAULT_CITIES[i]));
+  }
 
-  // Cascade: blank → current time, staggered left-to-right
-  await powerOnCascade(cells, periodEl, digits, time.period, 50);
+  // Get current times
+  var primaryTime = getTimeForZone("America/New_York");
+  var primaryDigits = showSeconds ? primaryTime.digits : primaryTime.digits.slice(0, 4);
 
-  // Start tick loop — pass digits so first tick diffs instead of instant-setting
-  startTickLoop(cells, periodEl, "America/New_York", showSeconds, digits);
+  // Cascade primary first
+  await powerOnCascade(primaryCells, primaryPeriodEl, primaryDigits, primaryTime.period, 50);
+
+  // Cascade all secondary clocks in parallel
+  var secondaryCascades = [];
+  for (var i = 0; i < secondaryClocks.length; i++) {
+    var sc = secondaryClocks[i];
+    var time = getTimeForZone(sc.tz);
+    var digits = time.digits.slice(0, 4);
+
+    // Update day badge during cascade
+    var dayOffset = getDayOffset(sc.tz, "America/New_York");
+    if (dayOffset) {
+      sc.dayBadgeEl.textContent = dayOffset;
+      sc.dayBadgeEl.style.display = "";
+    }
+
+    secondaryCascades.push(powerOnCascade(sc.cells, sc.periodEl, digits, time.period, 50));
+  }
+  await Promise.all(secondaryCascades);
+
+  // ── Unified tick loop ──
+  var primaryPrev = primaryDigits;
+  var secondaryPrevs = [];
+  for (var i = 0; i < secondaryClocks.length; i++) {
+    var time = getTimeForZone(secondaryClocks[i].tz);
+    secondaryPrevs.push(time.digits.slice(0, 4));
+  }
+
+  function tick() {
+    // Primary
+    var pTime = getTimeForZone("America/New_York");
+    var pDigits = showSeconds ? pTime.digits : pTime.digits.slice(0, 4);
+    var pChanged = diffDigits(primaryPrev, pDigits);
+    for (var j = 0; j < pChanged.length; j++) {
+      triggerFlip(primaryCells[pChanged[j]], primaryPrev[pChanged[j]], pDigits[pChanged[j]]);
+    }
+    if (primaryPeriodEl.textContent !== pTime.period) {
+      primaryPeriodEl.textContent = pTime.period;
+    }
+    primaryPrev = pDigits;
+
+    // Secondary clocks
+    for (var i = 0; i < secondaryClocks.length; i++) {
+      var sc = secondaryClocks[i];
+      var sTime = getTimeForZone(sc.tz);
+      var sDigits = sTime.digits.slice(0, 4);
+      var sChanged = diffDigits(secondaryPrevs[i], sDigits);
+      for (var j = 0; j < sChanged.length; j++) {
+        triggerFlip(sc.cells[sChanged[j]], secondaryPrevs[i][sChanged[j]], sDigits[sChanged[j]]);
+      }
+      if (sc.periodEl.textContent !== sTime.period) {
+        sc.periodEl.textContent = sTime.period;
+      }
+
+      // Update day badge
+      var dayOffset = getDayOffset(sc.tz, "America/New_York");
+      if (dayOffset) {
+        sc.dayBadgeEl.textContent = dayOffset;
+        sc.dayBadgeEl.style.display = "";
+      } else {
+        sc.dayBadgeEl.style.display = "none";
+      }
+
+      secondaryPrevs[i] = sDigits;
+    }
+  }
+
+  setInterval(tick, 1000);
 }
 
 init();

@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Tock — Secondary Clock Tests</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #111; color: #ccc; font-family: "SF Mono", monospace; padding: 2rem; }
+    h1 { font-size: 1rem; margin-bottom: 1rem; color: #e0d8b0; }
+    h2 { font-size: 0.85rem; margin-top: 1rem; margin-bottom: 0.5rem; color: #888; }
+    .pass { color: #4a2; }
+    .fail { color: #d44; }
+    .result { padding: 0.25rem 0; font-size: 0.85rem; }
+    #summary { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #333; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <h1>flap.js — secondary clock tests</h1>
+  <div id="log"></div>
+  <div id="summary"></div>
+
+  <!-- Hidden test fixtures -->
+  <div style="display:none">
+    <div id="secondary-container"></div>
+    <div class="clock" id="test-clock">
+      <div class="clock-digits"></div>
+    </div>
+  </div>
+
+  <script>
+    // ── Minimal test runner (supports async tests) ──
+    const log = document.getElementById("log");
+    let passed = 0, failed = 0, pending = 0;
+
+    function assert(condition, msg) {
+      if (!condition) throw new Error(msg);
+    }
+
+    function assertEqual(actual, expected, msg) {
+      if (actual !== expected) {
+        throw new Error(`${msg}: expected "${expected}", got "${actual}"`);
+      }
+    }
+
+    function logResult(name, pass, errMsg) {
+      if (pass) {
+        passed++;
+        log.innerHTML += `<div class="result pass">✓ ${name}</div>`;
+      } else {
+        failed++;
+        log.innerHTML += `<div class="result fail">✗ ${name} — ${errMsg}</div>`;
+      }
+      pending--;
+      if (pending === 0) showSummary();
+    }
+
+    function test(name, fn) {
+      pending++;
+      try {
+        const result = fn();
+        if (result && typeof result.then === "function") {
+          result.then(() => logResult(name, true))
+                .catch(e => logResult(name, false, e.message));
+        } else {
+          logResult(name, true);
+        }
+      } catch (e) {
+        logResult(name, false, e.message);
+      }
+    }
+
+    function section(name) {
+      log.innerHTML += `<h2>${name}</h2>`;
+    }
+
+    function showSummary() {
+      const total = passed + failed;
+      const summary = document.getElementById("summary");
+      summary.className = failed ? "fail" : "pass";
+      summary.textContent = `${passed}/${total} passed` + (failed ? ` — ${failed} failed` : "");
+    }
+
+    function delay(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    function fireAnimationEndOnAll(cells) {
+      for (const cell of cells) {
+        cell.querySelector(".bottom-flap").dispatchEvent(new Event("animationend"));
+      }
+    }
+  </script>
+
+  <!-- Load flap.js (init() exits early — no #clock element) -->
+  <script src="../flap.js"></script>
+
+  <script>
+    // ── getDayForZone ──
+    section("getDayForZone");
+
+    test("returns a 3-letter uppercase weekday string", () => {
+      const day = getDayForZone("America/New_York");
+      assertEqual(day.length, 3, "day length");
+      assertEqual(day, day.toUpperCase(), "should be uppercase");
+    });
+
+    test("returns valid weekday abbreviation", () => {
+      const validDays = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+      const day = getDayForZone("America/New_York");
+      assert(validDays.includes(day), `"${day}" is not a valid weekday abbreviation`);
+    });
+
+    test("works with various timezones", () => {
+      const validDays = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+      const zones = ["Pacific/Auckland", "Asia/Jerusalem", "America/Los_Angeles", "America/Chicago"];
+      for (const tz of zones) {
+        const day = getDayForZone(tz);
+        assertEqual(day.length, 3, `${tz} day length`);
+        assert(validDays.includes(day), `${tz}: "${day}" is not valid`);
+      }
+    });
+
+    // ── getDayOffset ──
+    section("getDayOffset");
+
+    test("returns null when same day as reference", () => {
+      // Same timezone always has same day
+      const result = getDayOffset("America/New_York", "America/New_York");
+      assertEqual(result, null, "same tz should return null");
+    });
+
+    test("returns day string or null (never undefined)", () => {
+      const result = getDayOffset("Pacific/Auckland", "America/New_York");
+      assert(result === null || typeof result === "string", "should be null or string");
+      if (result !== null) {
+        assertEqual(result.length, 3, "day abbreviation length");
+      }
+    });
+
+    test("returns city day abbreviation when different from reference", () => {
+      // We can't guarantee Auckland is always on a different day,
+      // but we can test the return type is correct
+      const result = getDayOffset("Pacific/Auckland", "America/New_York");
+      if (result !== null) {
+        const validDays = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+        assert(validDays.includes(result), `"${result}" is not a valid day`);
+        // When non-null, it should be Auckland's day, not NYC's
+        assertEqual(result, getDayForZone("Pacific/Auckland"), "should match city day");
+      }
+    });
+
+    // ── DEFAULT_CITIES ──
+    section("DEFAULT_CITIES");
+
+    test("has 4 cities", () => {
+      assertEqual(DEFAULT_CITIES.length, 4, "city count");
+    });
+
+    test("each city has name and tz", () => {
+      for (const city of DEFAULT_CITIES) {
+        assert(typeof city.name === "string", `name should be string: ${city.name}`);
+        assert(typeof city.tz === "string", `tz should be string: ${city.tz}`);
+        assert(city.name.length > 0, "name should not be empty");
+        assert(city.tz.length > 0, "tz should not be empty");
+      }
+    });
+
+    test("city names are ALL CAPS", () => {
+      for (const city of DEFAULT_CITIES) {
+        assertEqual(city.name, city.name.toUpperCase(), `${city.name} should be uppercase`);
+      }
+    });
+
+    test("timezones are valid (getTimeForZone does not throw)", () => {
+      for (const city of DEFAULT_CITIES) {
+        const result = getTimeForZone(city.tz);
+        assert(Array.isArray(result.digits), `${city.name} digits should be array`);
+      }
+    });
+
+    // ── renderSecondaryClock ──
+    section("renderSecondaryClock");
+
+    test("creates a .clock.secondary element in container", () => {
+      const container = document.getElementById("secondary-container");
+      container.innerHTML = "";
+      renderSecondaryClock(container, { name: "TEST CITY", tz: "America/Chicago" });
+      const clockEl = container.querySelector(".clock.secondary");
+      assert(clockEl !== null, "should create .clock.secondary");
+    });
+
+    test("creates city-label-row with city name", () => {
+      const container = document.getElementById("secondary-container");
+      container.innerHTML = "";
+      renderSecondaryClock(container, { name: "NASHVILLE", tz: "America/Chicago" });
+      const label = container.querySelector(".city-label");
+      assertEqual(label.textContent, "NASHVILLE", "city label text");
+    });
+
+    test("creates day badge (hidden by default)", () => {
+      const container = document.getElementById("secondary-container");
+      container.innerHTML = "";
+      const result = renderSecondaryClock(container, { name: "TEST", tz: "America/Chicago" });
+      assert(result.dayBadgeEl !== null, "dayBadgeEl should exist");
+      assertEqual(result.dayBadgeEl.style.display, "none", "day badge hidden by default");
+    });
+
+    test("returns 4 cells (HH:MM, no seconds)", () => {
+      const container = document.getElementById("secondary-container");
+      container.innerHTML = "";
+      const result = renderSecondaryClock(container, { name: "TEST", tz: "America/Chicago" });
+      assertEqual(result.cells.length, 4, "cell count");
+    });
+
+    test("returns periodEl", () => {
+      const container = document.getElementById("secondary-container");
+      container.innerHTML = "";
+      const result = renderSecondaryClock(container, { name: "TEST", tz: "America/Chicago" });
+      assert(result.periodEl !== null, "periodEl should exist");
+      assert(result.periodEl.classList.contains("period-label"), "has period-label class");
+    });
+
+    test("returns tz matching the city", () => {
+      const container = document.getElementById("secondary-container");
+      container.innerHTML = "";
+      const result = renderSecondaryClock(container, { name: "TEST", tz: "America/Chicago" });
+      assertEqual(result.tz, "America/Chicago", "tz should match");
+    });
+
+    test("each cell has four-layer structure", () => {
+      const container = document.getElementById("secondary-container");
+      container.innerHTML = "";
+      const result = renderSecondaryClock(container, { name: "TEST", tz: "America/Chicago" });
+      for (let i = 0; i < result.cells.length; i++) {
+        assert(result.cells[i].querySelector(".top-static span"), `cell[${i}] missing top-static span`);
+        assert(result.cells[i].querySelector(".bottom-static span"), `cell[${i}] missing bottom-static span`);
+        assert(result.cells[i].querySelector(".top-flap span"), `cell[${i}] missing top-flap span`);
+        assert(result.cells[i].querySelector(".bottom-flap span"), `cell[${i}] missing bottom-flap span`);
+      }
+    });
+
+    test("creates 1 colon separator (no seconds)", () => {
+      const container = document.getElementById("secondary-container");
+      container.innerHTML = "";
+      renderSecondaryClock(container, { name: "TEST", tz: "America/Chicago" });
+      const colons = container.querySelectorAll(".colon-separator");
+      assertEqual(colons.length, 1, "colon count");
+    });
+
+    // ── Multiple secondary clocks ──
+    section("multiple secondary clocks");
+
+    test("can render all 4 default cities into a container", () => {
+      const container = document.getElementById("secondary-container");
+      container.innerHTML = "";
+      const results = [];
+      for (const city of DEFAULT_CITIES) {
+        results.push(renderSecondaryClock(container, city));
+      }
+      assertEqual(results.length, 4, "should have 4 results");
+      const clocks = container.querySelectorAll(".clock.secondary");
+      assertEqual(clocks.length, 4, "should have 4 clock elements");
+    });
+
+    test("each rendered city has correct label", () => {
+      const container = document.getElementById("secondary-container");
+      container.innerHTML = "";
+      for (const city of DEFAULT_CITIES) {
+        renderSecondaryClock(container, city);
+      }
+      const labels = container.querySelectorAll(".city-label");
+      assertEqual(labels.length, 4, "should have 4 labels");
+      for (let i = 0; i < DEFAULT_CITIES.length; i++) {
+        assertEqual(labels[i].textContent, DEFAULT_CITIES[i].name, `label ${i}`);
+      }
+    });
+
+    // ── Day badge integration ──
+    section("day badge integration");
+
+    test("day badge can be shown by setting textContent and display", () => {
+      const container = document.getElementById("secondary-container");
+      container.innerHTML = "";
+      const result = renderSecondaryClock(container, { name: "TEST", tz: "Pacific/Auckland" });
+
+      // Simulate showing the badge
+      result.dayBadgeEl.textContent = "TUE";
+      result.dayBadgeEl.style.display = "";
+      assertEqual(result.dayBadgeEl.textContent, "TUE", "badge text");
+      assert(result.dayBadgeEl.style.display !== "none", "badge should be visible");
+    });
+
+    test("day badge can be hidden again", () => {
+      const container = document.getElementById("secondary-container");
+      container.innerHTML = "";
+      const result = renderSecondaryClock(container, { name: "TEST", tz: "Pacific/Auckland" });
+
+      result.dayBadgeEl.textContent = "TUE";
+      result.dayBadgeEl.style.display = "";
+      // Hide it
+      result.dayBadgeEl.style.display = "none";
+      assertEqual(result.dayBadgeEl.style.display, "none", "badge should be hidden");
+    });
+
+    // ── Cascade with secondary clocks ──
+    section("cascade with secondary clocks");
+
+    test("powerOnCascade works with 4-cell secondary clock", () => {
+      const container = document.getElementById("secondary-container");
+      container.innerHTML = "";
+      const result = renderSecondaryClock(container, { name: "TEST", tz: "America/Chicago" });
+      const digits = ["1", "2", "3", "0"];
+      const p = powerOnCascade(result.cells, result.periodEl, digits, "PM", 0);
+      return delay(0).then(() => {
+        fireAnimationEndOnAll(result.cells);
+        return p;
+      }).then(() => {
+        for (let i = 0; i < result.cells.length; i++) {
+          assertEqual(
+            result.cells[i].querySelector(".top-static span").textContent,
+            digits[i],
+            `cell[${i}] top-static`
+          );
+        }
+      });
+    });
+  </script>
+</body>
+</html>
