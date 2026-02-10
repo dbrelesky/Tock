@@ -65,6 +65,59 @@ function getTimeForZone(timeZone) {
   };
 }
 
+function getHour24ForZone(timeZone) {
+  var now = new Date();
+  var formatter = new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    hour12: false,
+    timeZone: timeZone,
+  });
+  var h = parseInt(formatter.format(now), 10);
+  // Intl may return 24 for midnight in some locales — normalize to 0
+  return h === 24 ? 0 : h;
+}
+
+// ── Period label color gradient ──
+// Maps each hour of the 24-hour day to a subtle color for the AM/PM label.
+// Daytime (6–17): warm tones — soft gold → amber → muted rust
+// Nighttime (18–5): cool tones — slate blue → navy → soft indigo
+
+var PERIOD_COLORS = [
+  /* 00 */ "#7b6e9b",  // midnight — muted lavender
+  /* 01 */ "#7a6d9e",  // deep lavender
+  /* 02 */ "#786ba0",  // purple-blue
+  /* 03 */ "#6e6a9e",  // indigo hint
+  /* 04 */ "#6a6fa0",  // pre-dawn blue-violet
+  /* 05 */ "#7080a3",  // dawn horizon — blue lifting
+  /* 06 */ "#c8b878",  // sunrise — soft gold
+  /* 07 */ "#ccbc70",  // morning gold
+  /* 08 */ "#d0be68",  // warm yellow
+  /* 09 */ "#d4be60",  // bright morning gold
+  /* 10 */ "#d6b858",  // golden amber
+  /* 11 */ "#d8b050",  // warm amber
+  /* 12 */ "#d4a64a",  // noon — rich amber
+  /* 13 */ "#d09e48",  // afternoon amber
+  /* 14 */ "#cc9646",  // deepening amber
+  /* 15 */ "#c48e44",  // late afternoon
+  /* 16 */ "#bc8442",  // golden hour approach
+  /* 17 */ "#b07a40",  // dusk — muted rust
+  /* 18 */ "#8a7a8e",  // twilight — warm grey-violet
+  /* 19 */ "#7e7894",  // evening settling
+  /* 20 */ "#787698",  // deepening dusk
+  /* 21 */ "#74749c",  // night blue-violet
+  /* 22 */ "#7472a0",  // deep evening
+  /* 23 */ "#7870a0",  // late night violet
+];
+
+function getPeriodColor(hour24) {
+  return PERIOD_COLORS[hour24] || PERIOD_COLORS[0];
+}
+
+function applyPeriodColor(periodEl, timeZone) {
+  var h = getHour24ForZone(timeZone);
+  periodEl.style.color = getPeriodColor(h);
+}
+
 function diffDigits(prevDigits, currentDigits) {
   if (!prevDigits) {
     return currentDigits.map((_, i) => i);
@@ -472,6 +525,7 @@ function buildAndStart(clockEl, secondaryContainer, showSeconds, cities, animate
   if (animate) {
     // Rattle animation
     var primaryRattle = powerOnRattle(primaryCells, primaryPeriodEl, primaryDigits, primaryTime.period, 40);
+    applyPeriodColor(primaryPeriodEl, "America/New_York");
 
     var CLOCK_STAGGER_MS = 150;
     var allRattles = [primaryRattle];
@@ -488,6 +542,7 @@ function buildAndStart(clockEl, secondaryContainer, showSeconds, cities, animate
               sc.dayBadgeEl.textContent = dayOffset;
               sc.dayBadgeEl.style.display = "";
             }
+            applyPeriodColor(sc.periodEl, sc.tz);
             powerOnRattle(sc.cells, sc.periodEl, d, t.period, 40).then(resolve);
           }, 200 + idx * CLOCK_STAGGER_MS);
         }));
@@ -501,12 +556,14 @@ function buildAndStart(clockEl, secondaryContainer, showSeconds, cities, animate
     // Instant set (no animation — used on settings change)
     setAllDigits(primaryCells, primaryDigits);
     primaryPeriodEl.textContent = primaryTime.period;
+    applyPeriodColor(primaryPeriodEl, "America/New_York");
     for (var i = 0; i < secondaryClocks.length; i++) {
       var sc = secondaryClocks[i];
       var t = getTimeForZone(sc.tz);
       var d = t.digits.slice(0, 4);
       setAllDigits(sc.cells, d);
       sc.periodEl.textContent = t.period;
+      applyPeriodColor(sc.periodEl, sc.tz);
       var dayOffset = getDayOffset(sc.tz, "America/New_York");
       if (dayOffset) {
         sc.dayBadgeEl.textContent = dayOffset;
@@ -527,6 +584,7 @@ function buildAndStart(clockEl, secondaryContainer, showSeconds, cities, animate
       if (primaryPeriodEl.textContent !== pTime.period) {
         primaryPeriodEl.textContent = pTime.period;
       }
+      applyPeriodColor(primaryPeriodEl, "America/New_York");
       primaryPrev = pDigits;
 
       for (var i = 0; i < secondaryClocks.length; i++) {
@@ -540,6 +598,7 @@ function buildAndStart(clockEl, secondaryContainer, showSeconds, cities, animate
         if (sc.periodEl.textContent !== sTime.period) {
           sc.periodEl.textContent = sTime.period;
         }
+        applyPeriodColor(sc.periodEl, sc.tz);
         var dayOffset = getDayOffset(sc.tz, "America/New_York");
         if (dayOffset) {
           sc.dayBadgeEl.textContent = dayOffset;

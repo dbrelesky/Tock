@@ -42,6 +42,7 @@
 | R14 | Day-of-week shown for cities where the date differs from NYC (e.g., Auckland showing "TUE") | Must-have | ✅ |
 | R15 | City labels displayed in ALL CAPS | Must-have | ✅ |
 | R16 | Power-on cascade animation on page load/refresh — flaps flip into place as if the board is starting up | Must-have | ✅ |
+| R17 | AM/PM label color gradient — hour-based warm/cool tones per location. Daytime (6–17): gold→amber→rust. Nighttime (18–5): blue→navy→indigo. | Must-have | ✅ |
 
 ### Parts
 
@@ -54,7 +55,8 @@
 | **A5** | **Tick loop** — single `setInterval(1000)` drives all assemblies. Diffs digits, triggers flaps on change only. | |
 | **A6** | **Dark shell** — dark background, terminal font, centered layout. Responsive stacking on narrow screens. | |
 | **A7** | **Admin panel** — hidden drawer via gear icon. Seconds toggle, city list with remove, add-city input with timezone selector. Persists to localStorage. | |
-| **A8** | **Power-on cascade** — on load, all digits flip from blank to current values with staggered 30–80ms delays. Primary first, then secondary. | |
+| **A8** | **Power-on cascade** — on load, all digits flip from blank to current values with staggered 30–80ms delays. Primary first, then secondary. |
+| **A9** | **Period color gradient** — `PERIOD_COLORS[0..23]` maps each hour to a hex color. `getHour24ForZone(tz)` + `applyPeriodColor(periodEl, tz)` sets inline color on AM/PM labels. Warm tones for day (6–17), cool tones for night (18–5). | |
 
 ### Breadboard
 
@@ -295,4 +297,4 @@ flowchart TB
 |  |  |  |
 |:--|:--|:--|
 | **V1: FLAP DIGIT PROOF**<br>✅ DONE<br><br>• Four-layer DOM structure<br>• CSS 3D `@keyframes` with physics<br>• Gravity ease-in, overshoot, bounce settle<br>• Hinge gap + cast shadow<br><br>*Demo: Single digit flips with Solari-accurate physics* | **V2: PRIMARY NYC CLOCK**<br>✅ DONE<br><br>• Clock assembly HH:MM:SS<br>• 12h format + AM/PM flaps<br>• `Intl.DateTimeFormat` tick loop<br>• Diff digits, flip only changes<br><br>*Demo: NYC clock shows real time, digits flip each second* | **V3: POWER-ON CASCADE**<br>✅ DONE<br><br>• Digits start blank on load<br>• Staggered flip 30–80ms offsets<br>• Left-to-right, primary first<br>• • &nbsp;<br><br>*Demo: Refresh — digits rattle into place like a board powering on* |
-| **V4: SECONDARY CLOCKS**<br>✅ DONE<br><br>• 4 smaller clock assemblies<br>• ALL CAPS city labels<br>• Day-of-week badge (date differs from NYC)<br>• Hardcoded default cities<br><br>*Demo: NYC large + 4 cities below, Auckland shows "TUE"* | **V5: ADMIN PANEL**<br>✅ DONE<br><br>• Hidden gear-icon drawer<br>• Seconds toggle for primary clock<br>• Add/remove cities<br>• localStorage persistence<br><br>*Demo: Toggle seconds, add London, remove Nashville, refresh — persists* | |
+| **V4: SECONDARY CLOCKS**<br>✅ DONE<br><br>• 4 smaller clock assemblies<br>• ALL CAPS city labels<br>• Day-of-week badge (date differs from NYC)<br>• Hardcoded default cities<br><br>*Demo: NYC large + 4 cities below, Auckland shows "TUE"* | **V5: ADMIN PANEL**<br>✅ DONE<br><br>• Hidden gear-icon drawer<br>• Seconds toggle for primary clock<br>• Add/remove cities<br>• localStorage persistence<br><br>*Demo: Toggle seconds, add London, remove Nashville, refresh — persists* | **V6: PERIOD COLOR GRADIENT**<br>✅ DONE<br><br>• 24-hour color mapping array<br>• Daytime: gold→amber→rust<br>• Nighttime: blue→navy→indigo<br>• Per-location based on local hour<br><br>*Demo: NYC warm amber PM, Auckland cool lavender AM — visible simultaneously* |

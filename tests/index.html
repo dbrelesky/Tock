@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Tock — Test Runner</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #111; color: #ccc; font-family: "SF Mono", monospace; padding: 2rem; }
+    h1 { font-size: 1.2rem; margin-bottom: 0.5rem; color: #e0d8b0; }
+
+    #grand-summary {
+      font-size: 1rem;
+      margin-bottom: 1.5rem;
+      padding: 0.75rem 1rem;
+      border-radius: 4px;
+      background: #1a1a1a;
+    }
+    #grand-summary.pass { color: #4a2; }
+    #grand-summary.fail { color: #d44; }
+    #grand-summary.running { color: #aa8; }
+    #grand-summary.pending { color: #555; }
+
+    .controls { margin-bottom: 1rem; }
+
+    button {
+      background: #222;
+      color: #ccc;
+      border: 1px solid #333;
+      padding: 0.4rem 0.8rem;
+      font-family: inherit;
+      font-size: 0.8rem;
+      cursor: pointer;
+      border-radius: 3px;
+    }
+    button:hover { background: #333; }
+    button:disabled { opacity: 0.4; cursor: default; }
+
+    .suite {
+      margin-bottom: 0.5rem;
+      border: 1px solid #222;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .suite-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem 0.75rem;
+      background: #1a1a1a;
+      cursor: pointer;
+      user-select: none;
+    }
+    .suite-header:hover { background: #222; }
+
+    .suite-name { font-size: 0.85rem; }
+    .suite-link {
+      font-size: 0.7rem;
+      color: #555;
+      text-decoration: none;
+      margin-left: 0.75rem;
+    }
+    .suite-link:hover { color: #888; }
+
+    .suite-status { font-size: 0.8rem; }
+    .suite-status.pass { color: #4a2; }
+    .suite-status.fail { color: #d44; }
+    .suite-status.running { color: #aa8; }
+    .suite-status.pending { color: #444; }
+
+    .suite-details {
+      display: none;
+      padding: 0.5rem 0.75rem;
+      border-top: 1px solid #222;
+      font-size: 0.8rem;
+    }
+    .suite-details.open { display: block; }
+    .suite-details h2 { font-size: 0.75rem; margin-top: 0.5rem; margin-bottom: 0.25rem; color: #888; }
+    .suite-details .pass { color: #4a2; }
+    .suite-details .fail { color: #d44; }
+    .suite-details .result { padding: 0.15rem 0; }
+  </style>
+</head>
+<body>
+  <h1>Tock — Test Runner</h1>
+  <div class="controls">
+    <button id="run-btn">Run All</button>
+  </div>
+  <div id="grand-summary" class="pending">ready</div>
+  <div id="suites-container"></div>
+
+  <script src="../flap.js"></script>
+
+  <script>
+    const SUITES = [
+      { name: "Clock",        file: "clock-tests.html" },
+      { name: "Flap",         file: "flap-tests.html" },
+      { name: "Cascade",      file: "cascade-tests.html" },
+      { name: "Secondary",    file: "secondary-tests.html" },
+      { name: "Admin",        file: "admin-tests.html" },
+      { name: "Period Color", file: "period-color-tests.html" },
+    ];
+
+    const suitesContainer = document.getElementById("suites-container");
+    const grandSummary    = document.getElementById("grand-summary");
+    const runBtn          = document.getElementById("run-btn");
+
+    // ── Build suite rows ──
+    for (const suite of SUITES) {
+      const el = document.createElement("div");
+      el.className = "suite";
+      el.innerHTML =
+        `<div class="suite-header" data-file="${suite.file}">` +
+          `<span class="suite-name">${suite.name}` +
+            `<a class="suite-link" href="${suite.file}" target="_blank">standalone</a>` +
+          `</span>` +
+          `<span class="suite-status pending" id="status-${suite.file}">pending</span>` +
+        `</div>` +
+        `<div class="suite-details" id="details-${suite.file}"></div>`;
+      suitesContainer.appendChild(el);
+
+      el.querySelector(".suite-header").addEventListener("click", (e) => {
+        if (e.target.classList.contains("suite-link")) return;
+        document.getElementById(`details-${suite.file}`).classList.toggle("open");
+      });
+    }
+
+    // ── Run a single suite ──
+    async function runSuite(suite) {
+      const statusEl  = document.getElementById(`status-${suite.file}`);
+      const detailsEl = document.getElementById(`details-${suite.file}`);
+
+      statusEl.textContent = "running\u2026";
+      statusEl.className   = "suite-status running";
+      detailsEl.innerHTML  = "";
+      detailsEl.classList.remove("open");
+
+      const html = await fetch(suite.file).then(r => r.text());
+      const doc  = new DOMParser().parseFromString(html, "text/html");
+
+      // Clean previous temp nodes
+      document.querySelectorAll("[data-runner-temp]").forEach(el => el.remove());
+
+      // Inject fixture HTML
+      const hiddenDiv = doc.querySelector('div[style*="display:none"]');
+      if (hiddenDiv) {
+        const wrapper = document.createElement("div");
+        wrapper.setAttribute("data-runner-temp", "");
+        wrapper.style.display = "none";
+        wrapper.innerHTML = hiddenDiv.innerHTML;
+        document.body.appendChild(wrapper);
+      }
+
+      // Provide #log and #summary elements the test code expects
+      const logEl = document.createElement("div");
+      logEl.id = "log";
+      logEl.setAttribute("data-runner-temp", "");
+      logEl.style.display = "none";
+      document.body.appendChild(logEl);
+
+      const summaryEl = document.createElement("div");
+      summaryEl.id = "summary";
+      summaryEl.setAttribute("data-runner-temp", "");
+      summaryEl.style.display = "none";
+      document.body.appendChild(summaryEl);
+
+      // Gather inline script contents (skip <script src> tags like flap.js)
+      const scripts = doc.querySelectorAll("script:not([src])");
+      let code = "";
+      for (const s of scripts) code += s.textContent + "\n";
+
+      // Execute test code inside a function scope
+      try {
+        new Function(code)();
+      } catch (e) {
+        statusEl.textContent = "error";
+        statusEl.className   = "suite-status fail";
+        detailsEl.innerHTML  = `<div class="result fail">Suite error: ${e.message}</div>`;
+        detailsEl.classList.add("open");
+        cleanup();
+        return { passed: 0, failed: 1, total: 1 };
+      }
+
+      // Wait for summary element to be populated (handles async tests)
+      await new Promise(resolve => {
+        const deadline = setTimeout(resolve, 15000);
+        const poll = () => {
+          if (summaryEl.textContent) { clearTimeout(deadline); resolve(); }
+          else setTimeout(poll, 100);
+        };
+        setTimeout(poll, 50);
+      });
+
+      // Parse results
+      const match  = summaryEl.textContent.match(/(\d+)\/(\d+) passed/);
+      const passed = match ? parseInt(match[1]) : 0;
+      const total  = match ? parseInt(match[2]) : 0;
+      const failed = total - passed;
+
+      // Copy individual results into the suite details panel
+      detailsEl.innerHTML = logEl.innerHTML;
+
+      statusEl.textContent = `${passed}/${total} passed` + (failed ? ` \u2014 ${failed} failed` : "");
+      statusEl.className   = `suite-status ${failed ? "fail" : "pass"}`;
+
+      if (failed) detailsEl.classList.add("open");
+
+      cleanup();
+      return { passed, failed, total };
+    }
+
+    function cleanup() {
+      document.querySelectorAll("[data-runner-temp]").forEach(el => el.remove());
+      if (typeof _tickInterval !== "undefined" && _tickInterval) {
+        clearInterval(_tickInterval);
+        _tickInterval = null;
+      }
+      localStorage.removeItem("tock-showSeconds");
+      localStorage.removeItem("tock-cities");
+    }
+
+    // ── Run all suites sequentially ──
+    async function runAll() {
+      runBtn.disabled = true;
+      grandSummary.textContent = "running\u2026";
+      grandSummary.className   = "running";
+
+      let totalPassed = 0, totalFailed = 0, totalTests = 0;
+
+      for (const suite of SUITES) {
+        const r = await runSuite(suite);
+        totalPassed += r.passed;
+        totalFailed += r.failed;
+        totalTests  += r.total;
+      }
+
+      grandSummary.textContent = `${totalPassed}/${totalTests} passed` + (totalFailed ? ` \u2014 ${totalFailed} failed` : "");
+      grandSummary.className   = totalFailed ? "fail" : "pass";
+      runBtn.disabled = false;
+    }
+
+    runBtn.addEventListener("click", runAll);
+    runAll();
+  </script>
+</body>
+</html>
