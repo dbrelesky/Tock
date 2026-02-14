@@ -22,6 +22,10 @@ No install required. Serve the files with any static server:
 python3 -m http.server 3000
 ```
 
+## Live Site
+
+https://terminalclock.netlify.app
+
 Open [http://localhost:3000](http://localhost:3000).
 
 Or just open `index.html` directly in a browser.
