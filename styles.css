@@ -575,3 +575,190 @@ body {
 .admin-btn:hover {
   background: #444;
 }
+
+/* ── Mobile responsive ── */
+
+/* Prevent horizontal overflow */
+.clock-wall {
+  max-width: 100%;
+}
+
+/* Tablets and large phones */
+@media (max-width: 600px) {
+  .clock-wall {
+    padding: 1.5rem 1rem;
+    gap: 36px;
+  }
+
+  .flap-cell {
+    --flap-width: 48px;
+    --flap-height: 64px;
+    --half-height: 31px;
+    --font-size: 48px;
+    perspective: 320px;
+  }
+
+  .clock-digits {
+    gap: 6px;
+  }
+
+  .colon-separator {
+    font-size: 38px;
+  }
+
+  .period-label {
+    font-size: 14px;
+    margin-left: 8px;
+  }
+
+  .secondary .flap-cell {
+    --flap-width: 30px;
+    --flap-height: 40px;
+    --half-height: 19px;
+    --font-size: 30px;
+    perspective: 200px;
+  }
+
+  .secondary .colon-separator {
+    font-size: 22px;
+  }
+
+  .secondary-row {
+    gap: 24px;
+  }
+
+  .admin-panel {
+    width: calc(100% - 32px);
+    max-width: 340px;
+  }
+}
+
+/* Standard phones */
+@media (max-width: 430px) {
+  .clock-wall {
+    padding: 1rem 0.75rem;
+    gap: 28px;
+  }
+
+  .flap-cell {
+    --flap-width: 38px;
+    --flap-height: 52px;
+    --half-height: 25px;
+    --font-size: 38px;
+    perspective: 260px;
+  }
+
+  .clock-digits {
+    gap: 4px;
+  }
+
+  .colon-separator {
+    font-size: 30px;
+    padding: 0 1px;
+  }
+
+  .period-label {
+    font-size: 12px;
+    margin-left: 6px;
+  }
+
+  .city-label {
+    font-size: 12px;
+  }
+
+  .secondary .flap-cell {
+    --flap-width: 26px;
+    --flap-height: 34px;
+    --half-height: 16px;
+    --font-size: 26px;
+    perspective: 170px;
+  }
+
+  .secondary .clock-digits {
+    gap: 3px;
+  }
+
+  .secondary .colon-separator {
+    font-size: 20px;
+  }
+
+  .secondary .period-label {
+    font-size: 9px;
+    margin-left: 5px;
+  }
+
+  .secondary .city-label {
+    font-size: 10px;
+  }
+
+  .secondary-row {
+    gap: 20px;
+  }
+
+  .admin-panel {
+    width: calc(100% - 24px);
+    padding: 18px;
+  }
+
+  .admin-add-row {
+    flex-wrap: wrap;
+  }
+
+  .admin-add-row .admin-input {
+    flex: 1 1 45%;
+  }
+
+  .admin-add-row .admin-input-tz {
+    flex: 1 1 100%;
+  }
+
+  .admin-add-row .admin-btn {
+    flex: 1 1 100%;
+  }
+}
+
+/* Very small phones (320px-350px) */
+@media (max-width: 350px) {
+  .clock-wall {
+    padding: 0.75rem 0.5rem;
+  }
+
+  .flap-cell {
+    --flap-width: 32px;
+    --flap-height: 44px;
+    --half-height: 21px;
+    --font-size: 32px;
+    perspective: 220px;
+  }
+
+  .clock-digits {
+    gap: 3px;
+  }
+
+  .colon-separator {
+    font-size: 26px;
+    padding: 0;
+  }
+
+  .period-label {
+    font-size: 11px;
+    margin-left: 4px;
+  }
+
+  .secondary .flap-cell {
+    --flap-width: 22px;
+    --flap-height: 30px;
+    --half-height: 14px;
+    --font-size: 22px;
+    perspective: 150px;
+  }
+
+  .secondary .colon-separator {
+    font-size: 17px;
+  }
+
+  .secondary .period-label {
+    font-size: 8px;
+    margin-left: 3px;
+  }
+}
