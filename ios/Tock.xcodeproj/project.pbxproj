@@ -1,0 +1,662 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		C1A2B3C4D5E60001000001 /* TockApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1A2B3C4D5E60010000001 /* TockApp.swift */; };
+		C1A2B3C4D5E60001000002 /* WebViewContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1A2B3C4D5E60010000002 /* WebViewContainer.swift */; };
+		C1A2B3C4D5E60001000003 /* TimeFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1A2B3C4D5E60010000003 /* TimeFormatter.swift */; };
+		C1A2B3C4D5E60001000004 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C1A2B3C4D5E60010000004 /* Assets.xcassets */; };
+		C1A2B3C4D5E60001000005 /* index.html in Resources */ = {isa = PBXBuildFile; fileRef = C1A2B3C4D5E60010000005 /* index.html */; };
+		C1A2B3C4D5E60001000006 /* styles.css in Resources */ = {isa = PBXBuildFile; fileRef = C1A2B3C4D5E60010000006 /* styles.css */; };
+		C1A2B3C4D5E60001000007 /* flap.js in Resources */ = {isa = PBXBuildFile; fileRef = C1A2B3C4D5E60010000007 /* flap.js */; };
+		D1A2B3C4D5E60001000001 /* TockTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1A2B3C4D5E60010000001 /* TockTests.swift */; };
+		E1000001000001 /* TockWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000010000001 /* TockWidgetBundle.swift */; };
+		E1000001000002 /* TockTimeWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000010000002 /* TockTimeWidget.swift */; };
+		E1000001000003 /* FlipCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000010000003 /* FlipCardView.swift */; };
+		E1000001000004 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E1000010000004 /* Assets.xcassets */; };
+		E1000001000005 /* TockWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E1000010000005 /* TockWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		D1A2B3C4D5E60020000001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C1A2B3C4D5E60070000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C1A2B3C4D5E60040000001;
+			remoteInfo = Tock;
+		};
+		E1000020000001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C1A2B3C4D5E60070000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E1000040000001;
+			remoteInfo = TockWidgetExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		E1000050000003 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				E1000001000005 /* TockWidgetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		C1A2B3C4D5E60010000001 /* TockApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TockApp.swift; sourceTree = "<group>"; };
+		C1A2B3C4D5E60010000002 /* WebViewContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebViewContainer.swift; sourceTree = "<group>"; };
+		C1A2B3C4D5E60010000003 /* TimeFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeFormatter.swift; sourceTree = "<group>"; };
+		C1A2B3C4D5E60010000004 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		C1A2B3C4D5E60010000005 /* index.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; name = index.html; path = ../index.html; sourceTree = SOURCE_ROOT; };
+		C1A2B3C4D5E60010000006 /* styles.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; name = styles.css; path = ../styles.css; sourceTree = SOURCE_ROOT; };
+		C1A2B3C4D5E60010000007 /* flap.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; name = flap.js; path = ../flap.js; sourceTree = SOURCE_ROOT; };
+		C1A2B3C4D5E601000000A0 /* Tock.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Tock.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		C1A2B3C4D5E601000000B0 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		C1A2B3C4D5E601000000C0 /* Tock.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Tock.entitlements; sourceTree = "<group>"; };
+		D1A2B3C4D5E60010000001 /* TockTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TockTests.swift; sourceTree = "<group>"; };
+		D1A2B3C4D5E60010000002 /* TockTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TockTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		E1000010000001 /* TockWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TockWidgetBundle.swift; sourceTree = "<group>"; };
+		E1000010000002 /* TockTimeWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TockTimeWidget.swift; sourceTree = "<group>"; };
+		E1000010000003 /* FlipCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlipCardView.swift; sourceTree = "<group>"; };
+		E1000010000004 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		E1000010000005 /* TockWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = TockWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		E1000010000006 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		C1A2B3C4D5E60020000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D1A2B3C4D5E60020000002 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E1000050000002 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		C1A2B3C4D5E60030000001 = {
+			isa = PBXGroup;
+			children = (
+				C1A2B3C4D5E60030000002 /* Tock */,
+				D1A2B3C4D5E60030000001 /* TockTests */,
+				E1000030000001 /* TockWidget */,
+				C1A2B3C4D5E60030000003 /* Webapp */,
+				C1A2B3C4D5E60030000005 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		C1A2B3C4D5E60030000002 /* Tock */ = {
+			isa = PBXGroup;
+			children = (
+				C1A2B3C4D5E60010000001 /* TockApp.swift */,
+				C1A2B3C4D5E60010000002 /* WebViewContainer.swift */,
+				C1A2B3C4D5E60010000003 /* TimeFormatter.swift */,
+				C1A2B3C4D5E60010000004 /* Assets.xcassets */,
+				C1A2B3C4D5E601000000B0 /* Info.plist */,
+				C1A2B3C4D5E601000000C0 /* Tock.entitlements */,
+			);
+			path = Tock;
+			sourceTree = "<group>";
+		};
+		C1A2B3C4D5E60030000003 /* Webapp */ = {
+			isa = PBXGroup;
+			children = (
+				C1A2B3C4D5E60010000005 /* index.html */,
+				C1A2B3C4D5E60010000006 /* styles.css */,
+				C1A2B3C4D5E60010000007 /* flap.js */,
+			);
+			name = Webapp;
+			sourceTree = "<group>";
+		};
+		C1A2B3C4D5E60030000005 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				C1A2B3C4D5E601000000A0 /* Tock.app */,
+				D1A2B3C4D5E60010000002 /* TockTests.xctest */,
+				E1000010000005 /* TockWidgetExtension.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		D1A2B3C4D5E60030000001 /* TockTests */ = {
+			isa = PBXGroup;
+			children = (
+				D1A2B3C4D5E60010000001 /* TockTests.swift */,
+			);
+			path = TockTests;
+			sourceTree = "<group>";
+		};
+		E1000030000001 /* TockWidget */ = {
+			isa = PBXGroup;
+			children = (
+				E1000010000001 /* TockWidgetBundle.swift */,
+				E1000010000002 /* TockTimeWidget.swift */,
+				E1000010000003 /* FlipCardView.swift */,
+				E1000010000004 /* Assets.xcassets */,
+				E1000010000006 /* Info.plist */,
+			);
+			path = TockWidget;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		C1A2B3C4D5E60040000001 /* Tock */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C1A2B3C4D5E60060000001 /* Build configuration list for PBXNativeTarget "Tock" */;
+			buildPhases = (
+				C1A2B3C4D5E60050000001 /* Sources */,
+				C1A2B3C4D5E60020000001 /* Frameworks */,
+				C1A2B3C4D5E60050000002 /* Resources */,
+				E1000050000003 /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				E1000040000002 /* PBXTargetDependency */,
+			);
+			name = Tock;
+			productName = Tock;
+			productReference = C1A2B3C4D5E601000000A0 /* Tock.app */;
+			productType = "com.apple.product-type.application";
+		};
+		D1A2B3C4D5E60040000001 /* TockTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D1A2B3C4D5E60060000001 /* Build configuration list for PBXNativeTarget "TockTests" */;
+			buildPhases = (
+				D1A2B3C4D5E60050000001 /* Sources */,
+				D1A2B3C4D5E60020000002 /* Frameworks */,
+				D1A2B3C4D5E60050000002 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				D1A2B3C4D5E60040000002 /* PBXTargetDependency */,
+			);
+			name = TockTests;
+			productName = TockTests;
+			productReference = D1A2B3C4D5E60010000002 /* TockTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		E1000040000001 /* TockWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E1000060000001 /* Build configuration list for PBXNativeTarget "TockWidgetExtension" */;
+			buildPhases = (
+				E1000050000001 /* Sources */,
+				E1000050000002 /* Frameworks */,
+				E1000050000004 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = TockWidgetExtension;
+			productName = TockWidgetExtension;
+			productReference = E1000010000005 /* TockWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		C1A2B3C4D5E60070000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 2620;
+				TargetAttributes = {
+					C1A2B3C4D5E60040000001 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+					D1A2B3C4D5E60040000001 = {
+						CreatedOnToolsVersion = 15.0;
+						TestTargetID = C1A2B3C4D5E60040000001;
+					};
+					E1000040000001 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+				};
+			};
+			buildConfigurationList = C1A2B3C4D5E60060000002 /* Build configuration list for PBXProject "Tock" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = C1A2B3C4D5E60030000001;
+			productRefGroup = C1A2B3C4D5E60030000005 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				C1A2B3C4D5E60040000001 /* Tock */,
+				D1A2B3C4D5E60040000001 /* TockTests */,
+				E1000040000001 /* TockWidgetExtension */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		C1A2B3C4D5E60050000002 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C1A2B3C4D5E60001000004 /* Assets.xcassets in Resources */,
+				C1A2B3C4D5E60001000005 /* index.html in Resources */,
+				C1A2B3C4D5E60001000006 /* styles.css in Resources */,
+				C1A2B3C4D5E60001000007 /* flap.js in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D1A2B3C4D5E60050000002 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E1000050000004 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E1000001000004 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		C1A2B3C4D5E60050000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C1A2B3C4D5E60001000001 /* TockApp.swift in Sources */,
+				C1A2B3C4D5E60001000002 /* WebViewContainer.swift in Sources */,
+				C1A2B3C4D5E60001000003 /* TimeFormatter.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D1A2B3C4D5E60050000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D1A2B3C4D5E60001000001 /* TockTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E1000050000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E1000001000001 /* TockWidgetBundle.swift in Sources */,
+				E1000001000002 /* TockTimeWidget.swift in Sources */,
+				E1000001000003 /* FlipCardView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		D1A2B3C4D5E60040000002 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C1A2B3C4D5E60040000001 /* Tock */;
+			targetProxy = D1A2B3C4D5E60020000001 /* PBXContainerItemProxy */;
+		};
+		E1000040000002 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E1000040000001 /* TockWidgetExtension */;
+			targetProxy = E1000020000001 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		C1A2B3C4D5E60080000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		C1A2B3C4D5E60080000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		C1A2B3C4D5E60080000003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Tock/Tock.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7R6927B38A;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Tock/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Tock;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleLightContent;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.darrenbrelesky.Tock.ios;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		C1A2B3C4D5E60080000004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Tock/Tock.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7R6927B38A;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Tock/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Tock;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleLightContent;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.darrenbrelesky.Tock.ios;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		D1A2B3C4D5E60080000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.darrenbrelesky.TockTests.ios;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Tock.app/Tock";
+			};
+			name = Debug;
+		};
+		D1A2B3C4D5E60080000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.darrenbrelesky.TockTests.ios;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Tock.app/Tock";
+			};
+			name = Release;
+		};
+		E1000080000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7R6927B38A;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = TockWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Tock Widget";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.darrenbrelesky.Tock.ios.TockWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		E1000080000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7R6927B38A;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = TockWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Tock Widget";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.darrenbrelesky.Tock.ios.TockWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		C1A2B3C4D5E60060000001 /* Build configuration list for PBXNativeTarget "Tock" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C1A2B3C4D5E60080000003 /* Debug */,
+				C1A2B3C4D5E60080000004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C1A2B3C4D5E60060000002 /* Build configuration list for PBXProject "Tock" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C1A2B3C4D5E60080000001 /* Debug */,
+				C1A2B3C4D5E60080000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		D1A2B3C4D5E60060000001 /* Build configuration list for PBXNativeTarget "TockTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D1A2B3C4D5E60080000001 /* Debug */,
+				D1A2B3C4D5E60080000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E1000060000001 /* Build configuration list for PBXNativeTarget "TockWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E1000080000001 /* Debug */,
+				E1000080000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = C1A2B3C4D5E60070000001 /* Project object */;
+}
