@@ -1,4 +1,5 @@
 import AppKit
+import WebKit
 
 class MenuBarController {
     private var statusItem: NSStatusItem?
@@ -158,6 +159,22 @@ class MenuBarController {
         NSApp.activate(ignoringOtherApps: true)
         if let window = NSApp.windows.first(where: { $0.isVisible || $0.canBecomeMain }) {
             window.makeKeyAndOrderFront(nil)
+            if let webView = findWebView(in: window.contentView) {
+                webView.evaluateJavaScript("openAdmin()")
+            }
         }
+    }
+
+    private func findWebView(in view: NSView?) -> WKWebView? {
+        guard let view = view else { return nil }
+        if let webView = view as? WKWebView {
+            return webView
+        }
+        for subview in view.subviews {
+            if let found = findWebView(in: subview) {
+                return found
+            }
+        }
+        return nil
     }
 }
