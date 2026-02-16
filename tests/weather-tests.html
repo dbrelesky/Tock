@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Tock — Weather Tests</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #111; color: #ccc; font-family: "SF Mono", monospace; padding: 2rem; }
+    h1 { font-size: 1rem; margin-bottom: 1rem; color: #e0d8b0; }
+    h2 { font-size: 0.85rem; margin-top: 1rem; margin-bottom: 0.5rem; color: #888; }
+    .pass { color: #4a2; }
+    .fail { color: #d44; }
+    .result { padding: 0.25rem 0; font-size: 0.85rem; }
+    #summary { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #333; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <h1>flap.js — weather tests</h1>
+  <div id="log"></div>
+  <div id="summary"></div>
+
+  <!-- Hidden test fixtures -->
+  <div style="display:none">
+    <div id="secondary-container"></div>
+    <div class="clock" id="test-clock">
+      <div class="clock-digits"></div>
+    </div>
+    <datalist id="tz-list"></datalist>
+  </div>
+
+  <script>
+    // ── Minimal test runner ──
+    const log = document.getElementById("log");
+    let passed = 0, failed = 0, pending = 0;
+
+    function assert(condition, msg) {
+      if (!condition) throw new Error(msg);
+    }
+
+    function assertEqual(actual, expected, msg) {
+      if (actual !== expected) {
+        throw new Error(`${msg}: expected "${expected}", got "${actual}"`);
+      }
+    }
+
+    function logResult(name, pass, errMsg) {
+      if (pass) {
+        passed++;
+        log.innerHTML += `<div class="result pass">✓ ${name}</div>`;
+      } else {
+        failed++;
+        log.innerHTML += `<div class="result fail">✗ ${name} — ${errMsg}</div>`;
+      }
+      pending--;
+      if (pending === 0) showSummary();
+    }
+
+    function test(name, fn) {
+      pending++;
+      try {
+        const result = fn();
+        if (result && typeof result.then === "function") {
+          result.then(() => logResult(name, true))
+                .catch(e => logResult(name, false, e.message));
+        } else {
+          logResult(name, true);
+        }
+      } catch (e) {
+        logResult(name, false, e.message);
+      }
+    }
+
+    function section(name) {
+      log.innerHTML += `<h2>${name}</h2>`;
+    }
+
+    function showSummary() {
+      const total = passed + failed;
+      const summary = document.getElementById("summary");
+      summary.className = failed ? "fail" : "pass";
+      summary.textContent = `${passed}/${total} passed` + (failed ? ` — ${failed} failed` : "");
+    }
+
+    function clearStorage() {
+      localStorage.removeItem("tock-useCelsius");
+    }
+  </script>
+
+  <!-- Load flap.js (init() exits early — no #clock with correct structure) -->
+  <script src="../flap.js"></script>
+
+  <script>
+    // ══════════════════════════════════════════
+    // WMO code → icon mapping
+    // ══════════════════════════════════════════
+    section("WMO code → icon mapping");
+
+    test("Code 0 (clear sky) → sun", function () {
+      assertEqual(getWeatherIcon(0), "sun", "WMO 0");
+    });
+
+    test("Code 1 (mainly clear) → sun", function () {
+      assertEqual(getWeatherIcon(1), "sun", "WMO 1");
+    });
+
+    test("Code 2 (partly cloudy) → cloud-sun", function () {
+      assertEqual(getWeatherIcon(2), "cloud-sun", "WMO 2");
+    });
+
+    test("Code 3 (overcast) → cloud", function () {
+      assertEqual(getWeatherIcon(3), "cloud", "WMO 3");
+    });
+
+    test("Code 45 (fog) → cloud", function () {
+      assertEqual(getWeatherIcon(45), "cloud", "WMO 45");
+    });
+
+    test("Code 48 (depositing rime fog) → cloud", function () {
+      assertEqual(getWeatherIcon(48), "cloud", "WMO 48");
+    });
+
+    test("Code 51 (light drizzle) → rain", function () {
+      assertEqual(getWeatherIcon(51), "rain", "WMO 51");
+    });
+
+    test("Code 61 (slight rain) → rain", function () {
+      assertEqual(getWeatherIcon(61), "rain", "WMO 61");
+    });
+
+    test("Code 67 (heavy freezing rain) → rain", function () {
+      assertEqual(getWeatherIcon(67), "rain", "WMO 67");
+    });
+
+    test("Code 71 (slight snow) → snow", function () {
+      assertEqual(getWeatherIcon(71), "snow", "WMO 71");
+    });
+
+    test("Code 77 (snow grains) → snow", function () {
+      assertEqual(getWeatherIcon(77), "snow", "WMO 77");
+    });
+
+    test("Code 80 (slight rain showers) → rain", function () {
+      assertEqual(getWeatherIcon(80), "rain", "WMO 80");
+    });
+
+    test("Code 82 (violent rain showers) → rain", function () {
+      assertEqual(getWeatherIcon(82), "rain", "WMO 82");
+    });
+
+    test("Code 85 (slight snow showers) → snow", function () {
+      assertEqual(getWeatherIcon(85), "snow", "WMO 85");
+    });
+
+    test("Code 86 (heavy snow showers) → snow", function () {
+      assertEqual(getWeatherIcon(86), "snow", "WMO 86");
+    });
+
+    test("Code 95 (thunderstorm) → thunderstorm", function () {
+      assertEqual(getWeatherIcon(95), "thunderstorm", "WMO 95");
+    });
+
+    test("Code 99 (thunderstorm with heavy hail) → thunderstorm", function () {
+      assertEqual(getWeatherIcon(99), "thunderstorm", "WMO 99");
+    });
+
+    // ══════════════════════════════════════════
+    // cToF conversion
+    // ══════════════════════════════════════════
+    section("cToF conversion");
+
+    test("0°C → 32°F", function () {
+      assertEqual(cToF(0), 32, "freezing point");
+    });
+
+    test("100°C → 212°F", function () {
+      assertEqual(cToF(100), 212, "boiling point");
+    });
+
+    test("22.3°C → 72°F (rounded)", function () {
+      assertEqual(cToF(22.3), 72, "room temp");
+    });
+
+    test("-40°C → -40°F", function () {
+      assertEqual(cToF(-40), -40, "convergence point");
+    });
+
+    test("37°C → 99°F (body temp)", function () {
+      assertEqual(cToF(37), 99, "body temp");
+    });
+
+    // ══════════════════════════════════════════
+    // SVG generation
+    // ══════════════════════════════════════════
+    section("SVG generation");
+
+    test("getWeatherSVG('sun') returns valid SVG", function () {
+      var svg = getWeatherSVG("sun");
+      assert(svg.indexOf("<svg") === 0, "starts with <svg");
+      assert(svg.indexOf("</svg>") > 0, "ends with </svg>");
+      assert(svg.indexOf('fill="none"') > 0, "has fill=none (outline only)");
+      assert(svg.indexOf('stroke="#e0d8b0"') > 0, "has correct stroke color");
+    });
+
+    test("getWeatherSVG('cloud') returns valid SVG", function () {
+      var svg = getWeatherSVG("cloud");
+      assert(svg.indexOf("<svg") === 0, "starts with <svg");
+      assert(svg.indexOf('fill="none"') > 0, "outline only");
+    });
+
+    test("getWeatherSVG('cloud-sun') returns valid SVG", function () {
+      var svg = getWeatherSVG("cloud-sun");
+      assert(svg.indexOf("<svg") === 0, "starts with <svg");
+    });
+
+    test("getWeatherSVG('rain') returns valid SVG", function () {
+      var svg = getWeatherSVG("rain");
+      assert(svg.indexOf("<svg") === 0, "starts with <svg");
+    });
+
+    test("getWeatherSVG('snow') returns valid SVG", function () {
+      var svg = getWeatherSVG("snow");
+      assert(svg.indexOf("<svg") === 0, "starts with <svg");
+    });
+
+    test("getWeatherSVG('thunderstorm') returns valid SVG", function () {
+      var svg = getWeatherSVG("thunderstorm");
+      assert(svg.indexOf("<svg") === 0, "starts with <svg");
+    });
+
+    test("getWeatherSVG with unknown type returns empty string", function () {
+      assertEqual(getWeatherSVG("tornado"), "", "unknown type");
+    });
+
+    // ══════════════════════════════════════════
+    // Weather DOM
+    // ══════════════════════════════════════════
+    section("Weather DOM elements");
+
+    test("updateWeatherDisplay creates .weather-info in label row", function () {
+      var row = document.createElement("div");
+      row.className = "city-label-row";
+      row.innerHTML = '<span class="city-label">TEST</span>';
+
+      // Seed cache manually
+      weatherCache["TEST"] = { tempC: 22, weatherCode: 0, fetchedAt: Date.now(), lat: 0, lon: 0 };
+      updateWeatherDisplay(row, "TEST", false);
+
+      var info = row.querySelector(".weather-info");
+      assert(info !== null, "weather-info element created");
+      assert(info.querySelector(".weather-icon") !== null, "has icon");
+      assert(info.querySelector(".weather-temp") !== null, "has temp");
+    });
+
+    test("updateWeatherDisplay shows Fahrenheit by default", function () {
+      var row = document.createElement("div");
+      row.className = "city-label-row";
+      row.innerHTML = '<span class="city-label">FTEST</span>';
+
+      weatherCache["FTEST"] = { tempC: 22, weatherCode: 0, fetchedAt: Date.now(), lat: 0, lon: 0 };
+      updateWeatherDisplay(row, "FTEST", false);
+
+      var temp = row.querySelector(".weather-temp").textContent;
+      assertEqual(temp, "72°", "22°C = 72°F");
+    });
+
+    test("updateWeatherDisplay shows Celsius when requested", function () {
+      var row = document.createElement("div");
+      row.className = "city-label-row";
+      row.innerHTML = '<span class="city-label">CTEST</span>';
+
+      weatherCache["CTEST"] = { tempC: 22.3, weatherCode: 0, fetchedAt: Date.now(), lat: 0, lon: 0 };
+      updateWeatherDisplay(row, "CTEST", true);
+
+      var temp = row.querySelector(".weather-temp").textContent;
+      assertEqual(temp, "22°", "22.3°C rounds to 22°");
+    });
+
+    test("updateWeatherDisplay hides info when no cache entry", function () {
+      var row = document.createElement("div");
+      row.className = "city-label-row";
+      row.innerHTML = '<span class="city-label">EMPTY</span>';
+
+      // Create a weather-info so we can verify it gets hidden
+      var info = document.createElement("span");
+      info.className = "weather-info";
+      row.appendChild(info);
+
+      updateWeatherDisplay(row, "NOCACHE_CITY", false);
+      assertEqual(info.style.display, "none", "hidden when no data");
+    });
+
+    test("updateWeatherDisplay inserts before day badge", function () {
+      var row = document.createElement("div");
+      row.className = "city-label-row";
+      row.innerHTML = '<span class="city-label">BADGE</span><span class="day-badge">MON</span>';
+
+      weatherCache["BADGE"] = { tempC: 10, weatherCode: 3, fetchedAt: Date.now(), lat: 0, lon: 0 };
+      updateWeatherDisplay(row, "BADGE", false);
+
+      var children = row.children;
+      // Order: city-label, weather-info, day-badge
+      assertEqual(children[1].className, "weather-info", "weather-info before day-badge");
+      assertEqual(children[2].className, "day-badge", "day-badge is last");
+    });
+
+    // ══════════════════════════════════════════
+    // Cache staleness
+    // ══════════════════════════════════════════
+    section("Cache staleness");
+
+    test("isWeatherStale returns true when no entry", function () {
+      assert(isWeatherStale(null), "null is stale");
+    });
+
+    test("isWeatherStale returns true when no fetchedAt", function () {
+      assert(isWeatherStale({ tempC: 20 }), "missing fetchedAt is stale");
+    });
+
+    test("isWeatherStale returns false for recent entry", function () {
+      assert(!isWeatherStale({ fetchedAt: Date.now() - 1000 }), "1 second ago not stale");
+    });
+
+    test("isWeatherStale returns true for old entry (>30 min)", function () {
+      assert(isWeatherStale({ fetchedAt: Date.now() - 31 * 60 * 1000 }), "31 min ago is stale");
+    });
+
+    test("isWeatherStale returns false for entry at exactly 30 min", function () {
+      // At exactly 30 min boundary, not stale (uses >)
+      assert(!isWeatherStale({ fetchedAt: Date.now() - 30 * 60 * 1000 }), "exactly 30 min not stale");
+    });
+
+    // ══════════════════════════════════════════
+    // Graceful degradation
+    // ══════════════════════════════════════════
+    section("Graceful degradation");
+
+    test("updateWeatherDisplay handles null container gracefully", function () {
+      // Should not throw
+      updateWeatherDisplay(null, "ANYTHING", false);
+    });
+
+    test("fetchAndCacheWeather handles network error gracefully", function () {
+      // Save original fetch
+      var origFetch = window.fetch;
+      window.fetch = function () { return Promise.reject(new Error("Network error")); };
+
+      return fetchAndCacheWeather("FAIL_CITY").then(function (result) {
+        window.fetch = origFetch;
+        assertEqual(result, null, "returns null on failure");
+      }).catch(function (err) {
+        window.fetch = origFetch;
+        throw err;
+      });
+    });
+
+    // ══════════════════════════════════════════
+    // °F/°C toggle persistence
+    // ══════════════════════════════════════════
+    section("°F/°C toggle persistence");
+
+    test("loadUseCelsius defaults to false", function () {
+      clearStorage();
+      assertEqual(loadUseCelsius(), false, "default is Fahrenheit");
+    });
+
+    test("saveUseCelsius(true) persists", function () {
+      clearStorage();
+      saveUseCelsius(true);
+      assertEqual(loadUseCelsius(), true, "saved true");
+    });
+
+    test("saveUseCelsius(false) persists", function () {
+      clearStorage();
+      saveUseCelsius(false);
+      assertEqual(loadUseCelsius(), false, "saved false");
+    });
+
+    // ══════════════════════════════════════════
+    // renderSecondaryClock returns labelRow
+    // ══════════════════════════════════════════
+    section("renderSecondaryClock weather integration");
+
+    test("renderSecondaryClock returns labelRow property", function () {
+      var container = document.getElementById("secondary-container");
+      container.innerHTML = "";
+      var result = renderSecondaryClock(container, { name: "TEST CITY", tz: "America/Chicago" });
+      assert(result.labelRow !== undefined, "has labelRow");
+      assertEqual(result.labelRow.className, "city-label-row", "labelRow has correct class");
+    });
+
+    test("renderSecondaryClock returns name property", function () {
+      var container = document.getElementById("secondary-container");
+      container.innerHTML = "";
+      var result = renderSecondaryClock(container, { name: "PARIS", tz: "Europe/Paris" });
+      assertEqual(result.name, "PARIS", "name matches city name");
+    });
+
+    // Clean up
+    clearStorage();
+  </script>
+</body>
+</html>

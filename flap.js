@@ -333,6 +333,210 @@ function getDayOffset(cityTz, referenceTz) {
   return cityDay !== refDay ? cityDay : null;
 }
 
+// ── Weather SVG icons (monochromatic outline/line-art) ──
+
+function getWeatherSVG(type) {
+  var style = 'stroke="#e0d8b0" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"';
+  switch (type) {
+    case "sun":
+      return '<svg width="12" height="12" viewBox="0 0 24 24" ' + style + '>' +
+        '<circle cx="12" cy="12" r="5"/>' +
+        '<line x1="12" y1="1" x2="12" y2="3"/>' +
+        '<line x1="12" y1="21" x2="12" y2="23"/>' +
+        '<line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>' +
+        '<line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>' +
+        '<line x1="1" y1="12" x2="3" y2="12"/>' +
+        '<line x1="21" y1="12" x2="23" y2="12"/>' +
+        '<line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>' +
+        '<line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>' +
+        '</svg>';
+    case "cloud":
+      return '<svg width="12" height="12" viewBox="0 0 24 24" ' + style + '>' +
+        '<path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>' +
+        '</svg>';
+    case "cloud-sun":
+      return '<svg width="12" height="12" viewBox="0 0 24 24" ' + style + '>' +
+        '<path d="M17 18a5 5 0 0 0 0-10h-1.26a8 8 0 1 0-4.74 9"/>' +
+        '<circle cx="18" cy="7" r="3"/>' +
+        '<line x1="18" y1="1" x2="18" y2="2"/>' +
+        '<line x1="22" y1="7" x2="23" y2="7"/>' +
+        '<line x1="20.83" y1="3.17" x2="21.54" y2="2.46"/>' +
+        '</svg>';
+    case "rain":
+      return '<svg width="12" height="12" viewBox="0 0 24 24" ' + style + '>' +
+        '<path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>' +
+        '<line x1="8" y1="19" x2="7" y2="22"/>' +
+        '<line x1="12" y1="19" x2="11" y2="22"/>' +
+        '<line x1="16" y1="19" x2="15" y2="22"/>' +
+        '</svg>';
+    case "snow":
+      return '<svg width="12" height="12" viewBox="0 0 24 24" ' + style + '>' +
+        '<path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>' +
+        '<line x1="8" y1="20" x2="8" y2="20.01"/>' +
+        '<line x1="12" y1="20" x2="12" y2="20.01"/>' +
+        '<line x1="16" y1="20" x2="16" y2="20.01"/>' +
+        '<line x1="10" y1="22" x2="10" y2="22.01"/>' +
+        '<line x1="14" y1="22" x2="14" y2="22.01"/>' +
+        '</svg>';
+    case "thunderstorm":
+      return '<svg width="12" height="12" viewBox="0 0 24 24" ' + style + '>' +
+        '<path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>' +
+        '<polyline points="13 16 11 20 15 20 13 24"/>' +
+        '</svg>';
+    default:
+      return "";
+  }
+}
+
+function getWeatherIcon(wmoCode) {
+  if (wmoCode <= 1) return "sun";
+  if (wmoCode === 2) return "cloud-sun";
+  if (wmoCode === 3) return "cloud";
+  if (wmoCode >= 45 && wmoCode <= 48) return "cloud"; // fog
+  if (wmoCode >= 51 && wmoCode <= 67) return "rain";
+  if (wmoCode >= 71 && wmoCode <= 77) return "snow";
+  if (wmoCode >= 80 && wmoCode <= 82) return "rain";
+  if (wmoCode >= 85 && wmoCode <= 86) return "snow";
+  if (wmoCode >= 95 && wmoCode <= 99) return "thunderstorm";
+  return "cloud"; // fallback
+}
+
+function cToF(tempC) {
+  return Math.round(tempC * 9 / 5 + 32);
+}
+
+// ── Weather API ──
+
+function geocodeCity(name) {
+  var url = "https://geocoding-api.open-meteo.com/v1/search?name=" +
+    encodeURIComponent(name) + "&count=1&language=en";
+  return fetch(url)
+    .then(function (res) { return res.json(); })
+    .then(function (data) {
+      if (data.results && data.results.length > 0) {
+        return { lat: data.results[0].latitude, lon: data.results[0].longitude };
+      }
+      return null;
+    });
+}
+
+function fetchWeather(lat, lon) {
+  var url = "https://api.open-meteo.com/v1/forecast?latitude=" + lat +
+    "&longitude=" + lon + "&current=temperature_2m,weather_code&temperature_unit=celsius";
+  return fetch(url)
+    .then(function (res) { return res.json(); })
+    .then(function (data) {
+      if (data.current) {
+        return {
+          tempC: data.current.temperature_2m,
+          weatherCode: data.current.weather_code,
+        };
+      }
+      return null;
+    });
+}
+
+// ── Weather cache ──
+
+var weatherCache = {};
+
+function getWeatherCacheEntry(cityName) {
+  return weatherCache[cityName] || null;
+}
+
+function isWeatherStale(entry) {
+  if (!entry || !entry.fetchedAt) return true;
+  return (Date.now() - entry.fetchedAt) > 30 * 60 * 1000;
+}
+
+function fetchAndCacheWeather(cityName) {
+  var entry = weatherCache[cityName];
+
+  // If we have coords cached, skip geocoding
+  var coordsPromise;
+  if (entry && entry.lat != null && entry.lon != null) {
+    coordsPromise = Promise.resolve({ lat: entry.lat, lon: entry.lon });
+  } else {
+    coordsPromise = geocodeCity(cityName);
+  }
+
+  return coordsPromise.then(function (coords) {
+    if (!coords) return null;
+    return fetchWeather(coords.lat, coords.lon).then(function (weather) {
+      if (!weather) return null;
+      weatherCache[cityName] = {
+        lat: coords.lat,
+        lon: coords.lon,
+        tempC: weather.tempC,
+        weatherCode: weather.weatherCode,
+        fetchedAt: Date.now(),
+      };
+      return weatherCache[cityName];
+    });
+  }).catch(function (err) {
+    console.warn("Weather fetch failed for " + cityName + ":", err);
+    return null;
+  });
+}
+
+function refreshAllWeather(cityNames, onUpdate) {
+  var promises = [];
+  for (var i = 0; i < cityNames.length; i++) {
+    (function (name) {
+      promises.push(
+        fetchAndCacheWeather(name).then(function () {
+          if (onUpdate) onUpdate(name);
+        })
+      );
+    })(cityNames[i]);
+  }
+  return Promise.all(promises);
+}
+
+// ── Weather display ──
+
+function updateWeatherDisplay(containerEl, cityName, useCelsius) {
+  if (!containerEl) return;
+  var weatherInfoEl = containerEl.querySelector(".weather-info");
+
+  var entry = getWeatherCacheEntry(cityName);
+  if (!entry || entry.tempC == null) {
+    if (weatherInfoEl) weatherInfoEl.style.display = "none";
+    return;
+  }
+
+  if (!weatherInfoEl) {
+    weatherInfoEl = document.createElement("span");
+    weatherInfoEl.className = "weather-info";
+    // Insert before day badge if it exists, otherwise append
+    var dayBadge = containerEl.querySelector(".day-badge");
+    if (dayBadge) {
+      containerEl.insertBefore(weatherInfoEl, dayBadge);
+    } else {
+      containerEl.appendChild(weatherInfoEl);
+    }
+  }
+
+  var iconType = getWeatherIcon(entry.weatherCode);
+  var temp = useCelsius ? Math.round(entry.tempC) : cToF(entry.tempC);
+  var unit = useCelsius ? "\u00b0" : "\u00b0";
+
+  weatherInfoEl.style.display = "";
+  weatherInfoEl.innerHTML =
+    '<span class="weather-icon">' + getWeatherSVG(iconType) + '</span>' +
+    '<span class="weather-temp">' + temp + unit + '</span>';
+}
+
+// ── Temperature unit persistence ──
+
+function loadUseCelsius() {
+  return localStorage.getItem("tock-useCelsius") === "true";
+}
+
+function saveUseCelsius(val) {
+  localStorage.setItem("tock-useCelsius", String(val));
+}
+
 // ── Secondary clocks config ──
 
 var DEFAULT_CITIES = [
@@ -406,7 +610,9 @@ function renderSecondaryClock(container, city) {
     cells: result.cells,
     periodEl: result.periodEl,
     dayBadgeEl: dayBadge,
+    labelRow: labelRow,
     tz: city.tz,
+    name: city.name,
     clockEl: clockEl,
   };
 }
@@ -490,6 +696,7 @@ function populateTimezoneList() {
 // ── Init (only runs on index.html, not test pages) ──
 
 var _tickInterval = null;
+var _weatherInterval = null;
 
 function buildAndStart(clockEl, secondaryContainer, showSeconds, cities, animate) {
   // Clear previous tick loop
@@ -497,6 +704,13 @@ function buildAndStart(clockEl, secondaryContainer, showSeconds, cities, animate
     clearInterval(_tickInterval);
     _tickInterval = null;
   }
+  // Clear previous weather interval
+  if (_weatherInterval) {
+    clearInterval(_weatherInterval);
+    _weatherInterval = null;
+  }
+
+  var useCelsius = loadUseCelsius();
 
   // Re-render primary
   clockEl.querySelector(".clock-digits").innerHTML = "";
@@ -612,6 +826,33 @@ function buildAndStart(clockEl, secondaryContainer, showSeconds, cities, animate
 
     _tickInterval = setInterval(tick, 1000);
   }
+
+  // ── Weather integration ──
+  var primaryLabelRow = clockEl.querySelector(".city-label-row") || document.getElementById("primary-label-row");
+  var allCityNames = ["NEW YORK"];
+  for (var i = 0; i < cities.length; i++) {
+    allCityNames.push(cities[i].name);
+  }
+
+  function updateAllWeatherDisplays() {
+    var celsius = loadUseCelsius();
+    updateWeatherDisplay(primaryLabelRow, "NEW YORK", celsius);
+    for (var i = 0; i < secondaryClocks.length; i++) {
+      updateWeatherDisplay(secondaryClocks[i].labelRow, secondaryClocks[i].name, celsius);
+    }
+  }
+
+  // Initial fetch + display
+  refreshAllWeather(allCityNames, function () {
+    updateAllWeatherDisplays();
+  });
+
+  // Refresh every 30 minutes
+  _weatherInterval = setInterval(function () {
+    refreshAllWeather(allCityNames, function () {
+      updateAllWeatherDisplays();
+    });
+  }, 30 * 60 * 1000);
 }
 
 function init() {
@@ -634,12 +875,15 @@ function init() {
   var addNameInput = document.getElementById("add-city-name");
   var addTzInput = document.getElementById("add-city-tz");
 
+  var toggleCelsiusEl = document.getElementById("toggle-celsius");
+
   if (!trigger) return; // not on index.html
 
   populateTimezoneList();
 
   // Set initial toggle state
   toggleSecondsEl.checked = showSeconds;
+  toggleCelsiusEl.checked = loadUseCelsius();
 
   // Render initial city list
   renderCityList(cities, removeCity);
@@ -656,6 +900,20 @@ function init() {
     showSeconds = toggleSecondsEl.checked;
     saveShowSeconds(showSeconds);
     buildAndStart(clockEl, secondaryContainer, showSeconds, cities, false);
+  });
+
+  // Toggle celsius
+  toggleCelsiusEl.addEventListener("change", function () {
+    saveUseCelsius(toggleCelsiusEl.checked);
+    // Update weather displays without full rebuild
+    var celsius = toggleCelsiusEl.checked;
+    var primaryLabelRow = document.getElementById("primary-label-row");
+    updateWeatherDisplay(primaryLabelRow, "NEW YORK", celsius);
+    var secondaryLabels = secondaryContainer.querySelectorAll(".city-label-row");
+    for (var i = 0; i < secondaryLabels.length; i++) {
+      var cityName = secondaryLabels[i].querySelector(".city-label").textContent;
+      updateWeatherDisplay(secondaryLabels[i], cityName, celsius);
+    }
   });
 
   // Remove city

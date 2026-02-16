@@ -18,7 +18,18 @@
 		A1B2C3D4E5F60001000009 /* styles.css in Resources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60010000009 /* styles.css */; };
 		A1B2C3D4E5F6000100000A /* flap.js in Resources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F601000000A0 /* flap.js */; };
 		A1B2C3D4E5F6000100000B /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F601000000B0 /* WebKit.framework */; };
+		B1A2B3C4D5E6F001000001 /* TockTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1A2B3C4D5E6F010000001 /* TockTests.swift */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		B1A2B3C4D5E6F020000001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A1B2C3D4E5F60070000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A1B2C3D4E5F60040000001;
+			remoteInfo = Tock;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		A1B2C3D4E5F60010000001 /* TockApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TockApp.swift; sourceTree = "<group>"; };
@@ -35,6 +46,8 @@
 		A1B2C3D4E5F601000000C0 /* Tock.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Tock.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A1B2C3D4E5F601000000D0 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A1B2C3D4E5F601000000E0 /* Tock.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Tock.entitlements; sourceTree = "<group>"; };
+		B1A2B3C4D5E6F010000001 /* TockTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TockTests.swift; sourceTree = "<group>"; };
+		B1A2B3C4D5E6F010000002 /* TockTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TockTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -46,6 +59,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		B1A2B3C4D5E6F020000002 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -53,6 +73,7 @@
 			isa = PBXGroup;
 			children = (
 				A1B2C3D4E5F60030000002 /* Tock */,
+				B1A2B3C4D5E6F030000001 /* TockTests */,
 				A1B2C3D4E5F60030000003 /* Webapp */,
 				A1B2C3D4E5F60030000004 /* Frameworks */,
 				A1B2C3D4E5F60030000005 /* Products */,
@@ -97,8 +118,17 @@
 			isa = PBXGroup;
 			children = (
 				A1B2C3D4E5F601000000C0 /* Tock.app */,
+				B1A2B3C4D5E6F010000002 /* TockTests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		B1A2B3C4D5E6F030000001 /* TockTests */ = {
+			isa = PBXGroup;
+			children = (
+				B1A2B3C4D5E6F010000001 /* TockTests.swift */,
+			);
+			path = TockTests;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -121,6 +151,24 @@
 			productReference = A1B2C3D4E5F601000000C0 /* Tock.app */;
 			productType = "com.apple.product-type.application";
 		};
+		B1A2B3C4D5E6F040000001 /* TockTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B1A2B3C4D5E6F060000001 /* Build configuration list for PBXNativeTarget "TockTests" */;
+			buildPhases = (
+				B1A2B3C4D5E6F050000001 /* Sources */,
+				B1A2B3C4D5E6F020000002 /* Frameworks */,
+				B1A2B3C4D5E6F050000002 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				B1A2B3C4D5E6F040000002 /* PBXTargetDependency */,
+			);
+			name = TockTests;
+			productName = TockTests;
+			productReference = B1A2B3C4D5E6F010000002 /* TockTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -133,6 +181,10 @@
 				TargetAttributes = {
 					A1B2C3D4E5F60040000001 = {
 						CreatedOnToolsVersion = 15.0;
+					};
+					B1A2B3C4D5E6F040000001 = {
+						CreatedOnToolsVersion = 15.0;
+						TestTargetID = A1B2C3D4E5F60040000001;
 					};
 				};
 			};
@@ -150,6 +202,7 @@
 			projectRoot = "";
 			targets = (
 				A1B2C3D4E5F60040000001 /* Tock */,
+				B1A2B3C4D5E6F040000001 /* TockTests */,
 			);
 		};
 /* End PBXProject section */
@@ -163,6 +216,13 @@
 				A1B2C3D4E5F60001000008 /* index.html in Resources */,
 				A1B2C3D4E5F60001000009 /* styles.css in Resources */,
 				A1B2C3D4E5F6000100000A /* flap.js in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B1A2B3C4D5E6F050000002 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -182,7 +242,23 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		B1A2B3C4D5E6F050000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B1A2B3C4D5E6F001000001 /* TockTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		B1A2B3C4D5E6F040000002 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A1B2C3D4E5F60040000001 /* Tock */;
+			targetProxy = B1A2B3C4D5E6F020000001 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		A1B2C3D4E5F60080000001 /* Debug */ = {
@@ -361,6 +437,40 @@
 			};
 			name = Release;
 		};
+		B1A2B3C4D5E6F080000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.darrenbrelesky.TockTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Tock.app/Contents/MacOS/Tock";
+			};
+			name = Debug;
+		};
+		B1A2B3C4D5E6F080000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.darrenbrelesky.TockTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Tock.app/Contents/MacOS/Tock";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -378,6 +488,15 @@
 			buildConfigurations = (
 				A1B2C3D4E5F60080000001 /* Debug */,
 				A1B2C3D4E5F60080000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B1A2B3C4D5E6F060000001 /* Build configuration list for PBXNativeTarget "TockTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B1A2B3C4D5E6F080000001 /* Debug */,
+				B1A2B3C4D5E6F080000002 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

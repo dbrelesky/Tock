@@ -41,14 +41,19 @@ struct WebViewContainer: NSViewRepresentable {
 
     class Coordinator: NSObject, WKNavigationDelegate {
         func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
-            // Allow file:// URLs (our bundled webapp) and about:blank
             if let url = navigationAction.request.url {
+                // Allow file:// URLs (our bundled webapp) and about:blank
                 if url.isFileURL || url.scheme == "about" {
                     decisionHandler(.allow)
                     return
                 }
+                // Allow Open-Meteo API requests (weather data)
+                if url.scheme == "https" && (url.host == "api.open-meteo.com" || url.host == "geocoding-api.open-meteo.com") {
+                    decisionHandler(.allow)
+                    return
+                }
             }
-            // Block all external navigation
+            // Block all other external navigation
             decisionHandler(.cancel)
         }
 
