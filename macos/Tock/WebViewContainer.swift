@@ -6,6 +6,15 @@ struct WebViewContainer: NSViewRepresentable {
         let config = WKWebViewConfiguration()
         config.websiteDataStore = .default()
 
+        // Prevent WebKit from applying automatic dark mode color adjustments
+        // The webapp already has a dark design with explicit colors
+        let colorSchemeScript = WKUserScript(
+            source: "document.querySelector('head').insertAdjacentHTML('afterbegin', '<meta name=\"color-scheme\" content=\"light dark\">')",
+            injectionTime: .atDocumentEnd,
+            forMainFrameOnly: true
+        )
+        config.userContentController.addUserScript(colorSchemeScript)
+
         let webView = WKWebView(frame: .zero, configuration: config)
         webView.navigationDelegate = context.coordinator
         webView.setValue(false, forKey: "drawsBackground")
