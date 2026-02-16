@@ -23,7 +23,7 @@
 		W1000001000002 /* TockTimeWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = W1000010000002 /* TockTimeWidget.swift */; };
 		W1000001000003 /* FlipCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = W1000010000003 /* FlipCardView.swift */; };
 		W1000001000004 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = W1000010000004 /* Assets.xcassets */; };
-		W1000001000005 /* TockWidgetExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = W1000010000005 /* TockWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		W1000001000005 /* TockWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = W1000010000005 /* TockWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -44,15 +44,15 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		W1000050000003 /* Embed App Extensions */ = {
+		W1000050000003 /* Embed Foundation Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
-				W1000001000005 /* TockWidgetExtension.appex in Embed App Extensions */,
+				W1000001000005 /* TockWidgetExtension.appex in Embed Foundation Extensions */,
 			);
-			name = "Embed App Extensions";
+			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
@@ -80,6 +80,7 @@
 		W1000010000004 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		W1000010000005 /* TockWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = TockWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		W1000010000006 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		W1000010000007 /* TockWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TockWidget.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -108,7 +109,7 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		A1B2C3D4E5F60030000001 /* = ROOT group = */ = {
+		A1B2C3D4E5F60030000001 = {
 			isa = PBXGroup;
 			children = (
 				A1B2C3D4E5F60030000002 /* Tock */,
@@ -180,6 +181,7 @@
 				W1000010000003 /* FlipCardView.swift */,
 				W1000010000004 /* Assets.xcassets */,
 				W1000010000006 /* Info.plist */,
+				W1000010000007 /* TockWidget.entitlements */,
 			);
 			path = TockWidget;
 			sourceTree = "<group>";
@@ -194,7 +196,7 @@
 				A1B2C3D4E5F60050000001 /* Sources */,
 				A1B2C3D4E5F60020000001 /* Frameworks */,
 				A1B2C3D4E5F60050000002 /* Resources */,
-				W1000050000003 /* Embed App Extensions */,
+				W1000050000003 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
@@ -249,7 +251,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1500;
-				LastUpgradeCheck = 1500;
+				LastUpgradeCheck = 2620;
 				TargetAttributes = {
 					A1B2C3D4E5F60040000001 = {
 						CreatedOnToolsVersion = 15.0;
@@ -271,7 +273,7 @@
 				en,
 				Base,
 			);
-			mainGroup = A1B2C3D4E5F60030000001 /* = ROOT group = */;
+			mainGroup = A1B2C3D4E5F60030000001;
 			productRefGroup = A1B2C3D4E5F60030000005 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -394,6 +396,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
@@ -417,6 +420,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -456,6 +460,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -472,6 +477,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 			};
 			name = Release;
@@ -485,8 +491,11 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = 7R6927B38A;
+				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Tock/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Tock;
@@ -515,8 +524,11 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = 7R6927B38A;
+				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Tock/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Tock;
@@ -542,6 +554,7 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
@@ -559,6 +572,7 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
@@ -575,9 +589,11 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = TockWidget/TockWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = 7R6927B38A;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = TockWidget/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Tock Widget";
@@ -602,9 +618,11 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = TockWidget/TockWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = 7R6927B38A;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = TockWidget/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Tock Widget";
@@ -664,7 +682,6 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
-
 	};
 	rootObject = A1B2C3D4E5F60070000001 /* Project object */;
 }
