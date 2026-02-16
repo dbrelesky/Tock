@@ -1,5 +1,43 @@
 "use strict";
 
+// ── Startup chime (airline seatbelt ding) ──
+
+function playChime() {
+  try {
+    var ctx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function doChime() {
+      var now = ctx.currentTime;
+
+      function tone(freq, start, duration, gain) {
+        var osc = ctx.createOscillator();
+        var g = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.value = freq;
+        g.gain.setValueAtTime(gain, start);
+        g.gain.exponentialRampToValueAtTime(0.001, start + duration);
+        osc.connect(g);
+        g.connect(ctx.destination);
+        osc.start(start);
+        osc.stop(start + duration);
+      }
+
+      // Two-tone chime: G5 → C6 (classic airline ding-dong)
+      tone(784, now, 0.6, 0.3);        // G5
+      tone(1047, now + 0.18, 0.8, 0.3); // C6
+    }
+
+    // Browsers suspend AudioContext without user gesture; resume if needed
+    if (ctx.state === "suspended") {
+      ctx.resume().then(doChime);
+    } else {
+      doChime();
+    }
+  } catch (e) {
+    // Audio not available, skip silently
+  }
+}
+
 // ── Core flip animation (proven in V1, now per-cell) ──
 
 function triggerFlip(cellEl, oldChar, newChar) {
@@ -865,6 +903,7 @@ function init() {
 
   // Initial build with rattle animation
   buildAndStart(clockEl, secondaryContainer, showSeconds, cities, true);
+  playChime();
 
   // ── Admin panel wiring ──
   var trigger = document.getElementById("admin-trigger");
