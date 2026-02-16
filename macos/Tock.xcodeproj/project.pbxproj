@@ -19,6 +19,11 @@
 		A1B2C3D4E5F6000100000A /* flap.js in Resources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F601000000A0 /* flap.js */; };
 		A1B2C3D4E5F6000100000B /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F601000000B0 /* WebKit.framework */; };
 		B1A2B3C4D5E6F001000001 /* TockTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1A2B3C4D5E6F010000001 /* TockTests.swift */; };
+		W1000001000001 /* TockWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = W1000010000001 /* TockWidgetBundle.swift */; };
+		W1000001000002 /* TockTimeWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = W1000010000002 /* TockTimeWidget.swift */; };
+		W1000001000003 /* FlipCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = W1000010000003 /* FlipCardView.swift */; };
+		W1000001000004 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = W1000010000004 /* Assets.xcassets */; };
+		W1000001000005 /* TockWidgetExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = W1000010000005 /* TockWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -29,7 +34,28 @@
 			remoteGlobalIDString = A1B2C3D4E5F60040000001;
 			remoteInfo = Tock;
 		};
+		W1000020000001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A1B2C3D4E5F60070000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = W1000040000001;
+			remoteInfo = TockWidgetExtension;
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		W1000050000003 /* Embed App Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				W1000001000005 /* TockWidgetExtension.appex in Embed App Extensions */,
+			);
+			name = "Embed App Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		A1B2C3D4E5F60010000001 /* TockApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TockApp.swift; sourceTree = "<group>"; };
@@ -48,6 +74,12 @@
 		A1B2C3D4E5F601000000E0 /* Tock.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Tock.entitlements; sourceTree = "<group>"; };
 		B1A2B3C4D5E6F010000001 /* TockTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TockTests.swift; sourceTree = "<group>"; };
 		B1A2B3C4D5E6F010000002 /* TockTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TockTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		W1000010000001 /* TockWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TockWidgetBundle.swift; sourceTree = "<group>"; };
+		W1000010000002 /* TockTimeWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TockTimeWidget.swift; sourceTree = "<group>"; };
+		W1000010000003 /* FlipCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlipCardView.swift; sourceTree = "<group>"; };
+		W1000010000004 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		W1000010000005 /* TockWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = TockWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		W1000010000006 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -66,6 +98,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		W1000050000002 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -74,6 +113,7 @@
 			children = (
 				A1B2C3D4E5F60030000002 /* Tock */,
 				B1A2B3C4D5E6F030000001 /* TockTests */,
+				W1000030000001 /* TockWidget */,
 				A1B2C3D4E5F60030000003 /* Webapp */,
 				A1B2C3D4E5F60030000004 /* Frameworks */,
 				A1B2C3D4E5F60030000005 /* Products */,
@@ -119,6 +159,7 @@
 			children = (
 				A1B2C3D4E5F601000000C0 /* Tock.app */,
 				B1A2B3C4D5E6F010000002 /* TockTests.xctest */,
+				W1000010000005 /* TockWidgetExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -131,6 +172,18 @@
 			path = TockTests;
 			sourceTree = "<group>";
 		};
+		W1000030000001 /* TockWidget */ = {
+			isa = PBXGroup;
+			children = (
+				W1000010000001 /* TockWidgetBundle.swift */,
+				W1000010000002 /* TockTimeWidget.swift */,
+				W1000010000003 /* FlipCardView.swift */,
+				W1000010000004 /* Assets.xcassets */,
+				W1000010000006 /* Info.plist */,
+			);
+			path = TockWidget;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -141,10 +194,12 @@
 				A1B2C3D4E5F60050000001 /* Sources */,
 				A1B2C3D4E5F60020000001 /* Frameworks */,
 				A1B2C3D4E5F60050000002 /* Resources */,
+				W1000050000003 /* Embed App Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				W1000040000002 /* PBXTargetDependency */,
 			);
 			name = Tock;
 			productName = Tock;
@@ -169,6 +224,23 @@
 			productReference = B1A2B3C4D5E6F010000002 /* TockTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
+		W1000040000001 /* TockWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = W1000060000001 /* Build configuration list for PBXNativeTarget "TockWidgetExtension" */;
+			buildPhases = (
+				W1000050000001 /* Sources */,
+				W1000050000002 /* Frameworks */,
+				W1000050000004 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = TockWidgetExtension;
+			productName = TockWidgetExtension;
+			productReference = W1000010000005 /* TockWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -185,6 +257,9 @@
 					B1A2B3C4D5E6F040000001 = {
 						CreatedOnToolsVersion = 15.0;
 						TestTargetID = A1B2C3D4E5F60040000001;
+					};
+					W1000040000001 = {
+						CreatedOnToolsVersion = 15.0;
 					};
 				};
 			};
@@ -203,6 +278,7 @@
 			targets = (
 				A1B2C3D4E5F60040000001 /* Tock */,
 				B1A2B3C4D5E6F040000001 /* TockTests */,
+				W1000040000001 /* TockWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
@@ -223,6 +299,14 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		W1000050000004 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				W1000001000004 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -250,6 +334,16 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		W1000050000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				W1000001000001 /* TockWidgetBundle.swift in Sources */,
+				W1000001000002 /* TockTimeWidget.swift in Sources */,
+				W1000001000003 /* FlipCardView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -257,6 +351,11 @@
 			isa = PBXTargetDependency;
 			target = A1B2C3D4E5F60040000001 /* Tock */;
 			targetProxy = B1A2B3C4D5E6F020000001 /* PBXContainerItemProxy */;
+		};
+		W1000040000002 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = W1000040000001 /* TockWidgetExtension */;
+			targetProxy = W1000020000001 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -471,6 +570,60 @@
 			};
 			name = Release;
 		};
+		W1000080000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = TockWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Tock Widget";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.darrenbrelesky.Tock.TockWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		W1000080000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = TockWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Tock Widget";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.darrenbrelesky.Tock.TockWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -497,6 +650,15 @@
 			buildConfigurations = (
 				B1A2B3C4D5E6F080000001 /* Debug */,
 				B1A2B3C4D5E6F080000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		W1000060000001 /* Build configuration list for PBXNativeTarget "TockWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				W1000080000001 /* Debug */,
+				W1000080000002 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
