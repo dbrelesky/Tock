@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tock — Support</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #111111;
+    --surface: #1a1a1a;
+    --card: #222222;
+    --divider: #2a2a2a;
+    --cream: #e0d8b0;
+    --cream-dim: rgba(224, 216, 176, 0.5);
+    --cream-faint: rgba(224, 216, 176, 0.12);
+    --cream-ghost: rgba(224, 216, 176, 0.06);
+    --serif: 'Instrument Serif', Georgia, serif;
+    --mono: 'DM Mono', 'SF Mono', monospace;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--cream);
+    font-family: var(--mono);
+    font-size: 14px;
+    line-height: 1.7;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Grain overlay ── */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  .container {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 80px 24px 120px;
+  }
+
+  /* ── Header / Logo ── */
+  .header {
+    text-align: center;
+    margin-bottom: 72px;
+  }
+
+  .logo-flaps {
+    display: inline-flex;
+    gap: 6px;
+    margin-bottom: 20px;
+  }
+
+  .flap {
+    width: 52px;
+    height: 68px;
+    background: var(--card);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--mono);
+    font-size: 36px;
+    font-weight: 500;
+    color: var(--cream);
+    position: relative;
+    box-shadow:
+      0 1px 0 var(--divider),
+      0 4px 12px rgba(0,0,0,0.4);
+    animation: flapIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .flap:nth-child(1) { animation-delay: 0.05s; }
+  .flap:nth-child(2) { animation-delay: 0.1s; }
+  .flap:nth-child(3) { animation-delay: 0.15s; }
+  .flap:nth-child(4) { animation-delay: 0.2s; }
+
+  .flap::after {
+    content: '';
+    position: absolute;
+    left: 3px;
+    right: 3px;
+    top: 50%;
+    height: 1px;
+    background: rgba(0,0,0,0.5);
+    box-shadow: 0 1px 0 rgba(255,255,255,0.03);
+  }
+
+  @keyframes flapIn {
+    from {
+      opacity: 0;
+      transform: rotateX(-80deg) translateY(-8px);
+    }
+    to {
+      opacity: 1;
+      transform: rotateX(0) translateY(0);
+    }
+  }
+
+  .tagline {
+    font-family: var(--serif);
+    font-size: 18px;
+    font-style: italic;
+    color: var(--cream-dim);
+    letter-spacing: 0.02em;
+  }
+
+  .description {
+    margin-top: 16px;
+    color: var(--cream-dim);
+    font-size: 13px;
+    line-height: 1.8;
+    max-width: 480px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* ── Section titles ── */
+  .section-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--cream-dim);
+    margin-bottom: 28px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--cream-faint);
+  }
+
+  /* ── FAQ ── */
+  .faq-section { margin-bottom: 64px; }
+
+  .faq-item {
+    border-bottom: 1px solid var(--cream-ghost);
+    padding: 0;
+  }
+
+  .faq-question {
+    width: 100%;
+    background: none;
+    border: none;
+    color: var(--cream);
+    font-family: var(--serif);
+    font-size: 20px;
+    text-align: left;
+    padding: 20px 0;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: color 0.2s;
+  }
+
+  .faq-question:hover { color: #f0e8c8; }
+
+  .faq-arrow {
+    font-family: var(--mono);
+    font-size: 14px;
+    color: var(--cream-dim);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    flex-shrink: 0;
+    margin-left: 16px;
+  }
+
+  .faq-item.open .faq-arrow { transform: rotate(45deg); }
+
+  .faq-answer {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+                padding 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    padding: 0 0 0 0;
+  }
+
+  .faq-item.open .faq-answer {
+    max-height: 300px;
+    padding: 0 0 24px 0;
+  }
+
+  .faq-answer p {
+    color: var(--cream-dim);
+    font-size: 13px;
+    line-height: 1.8;
+  }
+
+  .faq-answer code {
+    background: var(--cream-ghost);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--cream);
+  }
+
+  /* ── Contact ── */
+  .contact-section { margin-bottom: 64px; }
+
+  .contact-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  @media (max-width: 480px) {
+    .contact-cards { grid-template-columns: 1fr; }
+  }
+
+  .contact-card {
+    background: var(--card);
+    border-radius: 8px;
+    padding: 24px;
+    text-decoration: none;
+    color: var(--cream);
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: block;
+    border: 1px solid var(--cream-ghost);
+  }
+
+  .contact-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    border-color: var(--cream-faint);
+  }
+
+  .contact-card-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--cream-dim);
+    margin-bottom: 8px;
+  }
+
+  .contact-card-value {
+    font-family: var(--serif);
+    font-size: 16px;
+  }
+
+  /* ── Footer ── */
+  .footer {
+    text-align: center;
+    padding-top: 48px;
+    border-top: 1px solid var(--cream-ghost);
+    color: var(--cream-dim);
+    font-size: 11px;
+    letter-spacing: 0.05em;
+  }
+
+  .footer span {
+    display: block;
+    margin-top: 4px;
+    opacity: 0.5;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <header class="header">
+    <div class="logo-flaps">
+      <div class="flap">T</div>
+      <div class="flap">O</div>
+      <div class="flap">C</div>
+      <div class="flap">K</div>
+    </div>
+    <p class="tagline">A split-flap clock that slaps.</p>
+    <p class="description">
+      Tock brings the beauty of vintage airport departure boards to your device.
+      Physics-driven flip animations, world clocks, live weather, and home screen widgets
+      — all in a dark, premium package.
+    </p>
+  </header>
+
+  <section class="faq-section">
+    <div class="section-label">Frequently Asked Questions</div>
+
+    <div class="faq-item">
+      <button class="faq-question" aria-expanded="false">
+        How do I add world clocks?
+        <span class="faq-arrow">+</span>
+      </button>
+      <div class="faq-answer">
+        <p>
+          Tap the gear icon in the bottom-right corner to open Settings.
+          Type a city name in the "Add a city" field and tap Add.
+          Your new clock appears instantly with its timezone and weather.
+          You can add as many cities as you like.
+        </p>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-question" aria-expanded="false">
+        Weather isn't showing for a city
+        <span class="faq-arrow">+</span>
+      </button>
+      <div class="faq-answer">
+        <p>
+          Weather data comes from the Open-Meteo API and requires an internet connection.
+          If a city's weather isn't appearing, check your connection and wait a moment — Tock
+          refreshes weather every 30 minutes. Very small or uncommon city names may not be
+          found by the geocoding service; try a nearby larger city instead.
+        </p>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-question" aria-expanded="false">
+        How do I set up home screen widgets?
+        <span class="faq-arrow">+</span>
+      </button>
+      <div class="faq-answer">
+        <p>
+          Long-press on your home screen, tap the <code>+</code> button in the top corner,
+          and search for "Tock." Choose between the small widget (time only) or the
+          medium widget (time with seconds, city, and AM/PM). Place it wherever you like.
+        </p>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-question" aria-expanded="false">
+        How do I toggle seconds or switch °F / °C?
+        <span class="faq-arrow">+</span>
+      </button>
+      <div class="faq-answer">
+        <p>
+          Open Settings via the gear icon. You'll find toggles for showing seconds on the
+          clock and switching between Fahrenheit and Celsius for weather display.
+        </p>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-question" aria-expanded="false">
+        Does Tock collect my data?
+        <span class="faq-arrow">+</span>
+      </button>
+      <div class="faq-answer">
+        <p>
+          No. Tock runs entirely on your device. The only network requests go to the
+          Open-Meteo public weather API — no accounts, no tracking, no analytics.
+          All your settings are stored locally.
+        </p>
+      </div>
+    </div>
+
+  </section>
+
+  <section class="contact-section">
+    <div class="section-label">Get in Touch</div>
+    <div class="contact-cards">
+      <a class="contact-card" href="mailto:tock@darrenbrelesky.com">
+        <div class="contact-card-label">Email Support</div>
+        <div class="contact-card-value">tock@darrenbrelesky.com</div>
+      </a>
+      <a class="contact-card" href="https://github.com/dbrelesky/Tock/issues" target="_blank" rel="noopener">
+        <div class="contact-card-label">Report a Bug</div>
+        <div class="contact-card-value">GitHub Issues</div>
+      </a>
+    </div>
+  </section>
+
+  <footer class="footer">
+    &copy; 2026 Darren Brelesky
+    <span>Made with care in New York</span>
+  </footer>
+
+</div>
+
+<script>
+  document.querySelectorAll('.faq-question').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const item = btn.parentElement;
+      const isOpen = item.classList.contains('open');
+
+      // Close all
+      document.querySelectorAll('.faq-item.open').forEach(i => {
+        i.classList.remove('open');
+        i.querySelector('.faq-question').setAttribute('aria-expanded', 'false');
+      });
+
+      // Open clicked (if it wasn't already open)
+      if (!isOpen) {
+        item.classList.add('open');
+        btn.setAttribute('aria-expanded', 'true');
+      }
+    });
+  });
+</script>
+
+</body>
+</html>

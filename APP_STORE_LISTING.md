@@ -13,7 +13,7 @@ Remember those gorgeous clocks at the airport? The ones with the mechanical digi
 **Meet Tock** — a split-flap clock for your iPhone and iPad that's so beautiful you'll check the time just to watch it move.
 
 **The real deal.**
-Every digit flips with physics-driven animation — gravity pull, overshoot, bounce, settle. We didn't just animate a number change. We simulated the whole mechanical dance. The colon pulses. The digits cascade on launch. There's even an airline chime when you open it, because we're extra like that.
+Every digit flips with physics-driven animation — gravity pull, overshoot, bounce, settle. We didn't just animate a number change. We simulated the whole mechanical dance. The colon pulses. The digits cascade on launch.
 
 **World clocks that actually look good.**
 Add cities from anywhere on Earth and watch their times tick in perfect split-flap sync. New York, Tokyo, Tel Aviv, Auckland — wherever your people are, Tock keeps you connected without looking like a spreadsheet.
@@ -30,7 +30,6 @@ Toggle seconds on or off. Switch between Fahrenheit and Celsius. Add any city, r
 **The highlights:**
 - Stunning split-flap animation with real physics
 - Power-on cascade effect on launch
-- Airline chime startup sound
 - 12-hour format with AM/PM
 - Multiple world clocks with live weather
 - Home screen widgets (small & medium)
@@ -56,7 +55,7 @@ Secondary: Lifestyle
 
 ## Support URL
 
-https://github.com/dbrelesky/Tock/issues
+https://dbrelesky.github.io/Tock/support.html
 
 ## Privacy Policy URL
 

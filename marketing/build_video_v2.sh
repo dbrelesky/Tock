@@ -1,5 +1,6 @@
 #!/bin/bash
-# Build Tock promo video v2: 9 scene frames + animated flutter ending + hip hop beat
+# Build Tock promo video v2: 9 app-screen frames + animated flutter ending + hip hop beat
+# Apple App Store compliant: all frames show actual app UI with text overlays
 # Scenes 1-9: ~1.22s each = ~11s, then 4s flutter animation = 15s total
 
 FRAMES_DIR="$(dirname "$0")/frames"
@@ -17,18 +18,18 @@ ffmpeg -y -framerate 30 -i "$FLUTTER_DIR/flutter_%04d.png" \
   -vf "scale=1284:2778,setsar=1" \
   /tmp/tock_flutter.mp4 2>/dev/null
 
-# Step 2: Build full video with 9 static scenes + flutter ending
+# Step 2: Build full video with 9 app-screen scenes + flutter ending
 echo "Building final video..."
 ffmpeg -y \
   -loop 1 -t $D -i "$FRAMES_DIR/frame01_intro.png" \
-  -loop 1 -t $D -i "$FRAMES_DIR/frame02_gorilla.png" \
-  -loop 1 -t $D -i "$FRAMES_DIR/frame03_rapid_flip.png" \
-  -loop 1 -t $D -i "$FRAMES_DIR/frame04_dj_cat.png" \
-  -loop 1 -t $D -i "$FRAMES_DIR/frame05_world_board.png" \
-  -loop 1 -t $D -i "$FRAMES_DIR/frame06_space_dog.png" \
-  -loop 1 -t $D -i "$FRAMES_DIR/frame07_macro.png" \
-  -loop 1 -t $D -i "$FRAMES_DIR/frame08_grandma.png" \
-  -loop 1 -t $D -i "$FRAMES_DIR/frame09_title.png" \
+  -loop 1 -t $D -i "$FRAMES_DIR/frame02_main_clock.png" \
+  -loop 1 -t $D -i "$FRAMES_DIR/frame03_flip.png" \
+  -loop 1 -t $D -i "$FRAMES_DIR/frame04_world_clocks.png" \
+  -loop 1 -t $D -i "$FRAMES_DIR/frame05_weather.png" \
+  -loop 1 -t $D -i "$FRAMES_DIR/frame06_settings.png" \
+  -loop 1 -t $D -i "$FRAMES_DIR/frame07_seconds.png" \
+  -loop 1 -t $D -i "$FRAMES_DIR/frame08_free.png" \
+  -loop 1 -t $D -i "$FRAMES_DIR/frame09_outro.png" \
   -i /tmp/tock_flutter.mp4 \
   -i "$AUDIO" \
   -filter_complex "
