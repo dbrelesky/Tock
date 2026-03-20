@@ -1,121 +1,116 @@
 #!/usr/bin/env python3
-"""Composite real app screenshots inside an iPhone frame onto fun backgrounds."""
+"""Composite real app screenshots inside a real iPhone frame onto backgrounds."""
 import os
-import sys
+import numpy as np
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 
-# Output dimensions (iPhone 14 Pro Max video spec)
+# Output dimensions (iPhone 6.5" App Store spec)
 OUT_W, OUT_H = 1284, 2778
 
-# iPhone frame dimensions (relative to output)
-PHONE_W = 820       # phone body width
-PHONE_H = 1680      # phone body height
-PHONE_RADIUS = 70   # corner radius
-BEZEL = 14          # bezel thickness
-SCREEN_W = PHONE_W - 2 * BEZEL
-SCREEN_H = PHONE_H - 2 * BEZEL
-NOTCH_W = 200       # Dynamic Island width
-NOTCH_H = 48        # Dynamic Island height
-NOTCH_RADIUS = 24
+# iPhone frame overlay (extracted from AI-generated mockup)
+# Original overlay: 1004x1999, screen at (30,30)-(973,1968), screen size 943x1938
+
+# Target phone size in the composite (scale to fit nicely)
+PHONE_SCALE = 0.82  # scale overlay to this fraction of output width
+OVERLAY_ORIG_W, OVERLAY_ORIG_H = 1004, 1999
+PHONE_W = int(OUT_W * PHONE_SCALE)
+PHONE_H = int(PHONE_W * OVERLAY_ORIG_H / OVERLAY_ORIG_W)
+
+# Screen position within the scaled overlay
+SCREEN_LEFT_FRAC = 30 / 1004
+SCREEN_TOP_FRAC = 30 / 1999
+SCREEN_RIGHT_FRAC = 973 / 1004
+SCREEN_BOTTOM_FRAC = 1968 / 1999
 
 # Colors
-PHONE_COLOR = (28, 28, 30)       # near-black titanium
-BEZEL_COLOR = (38, 38, 40)       # slightly lighter bezel
-NOTCH_COLOR = (0, 0, 0)          # pure black Dynamic Island
-TEXT_COLOR = (255, 255, 255)      # white text
-TEXT_SHADOW = (0, 0, 0)
-SUBTEXT_COLOR = (224, 216, 176)  # cream like the app
+TEXT_COLOR = (255, 255, 255)
+SUBTEXT_COLOR = (224, 216, 176)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CAPTURES_DIR = os.path.join(BASE_DIR, "captures")
 BG_DIR = os.path.join(BASE_DIR, "backgrounds")
 FRAMES_DIR = os.path.join(BASE_DIR, "frames")
+OVERLAY_PATH = os.path.join(BASE_DIR, "iphone_frame_overlay.png")
+
+# Cache the overlay
+_overlay_cache = None
 
 
-def get_font(size, bold=True):
-    """Get a font for text overlays."""
-    weight = "Bold" if bold else "Regular"
-    for name in [
-        f"/System/Library/Fonts/SFCompact-{weight}.otf",
-        f"/Library/Fonts/SF-Compact-Display-{weight}.otf",
-        f"/System/Library/Fonts/Helvetica.ttc",
-        "/System/Library/Fonts/SFNSDisplay.ttf",
-        "/System/Library/Fonts/SFMono-Bold.otf",
+def get_overlay():
+    """Load and cache the iPhone frame overlay."""
+    global _overlay_cache
+    if _overlay_cache is None:
+        _overlay_cache = Image.open(OVERLAY_PATH).convert("RGBA")
+    return _overlay_cache.copy()
+
+
+# ── Fonts ──
+
+def get_headline_font(size):
+    """Heavy weight font for headlines."""
+    for path in [
+        "/System/Library/Fonts/Supplemental/Arial Black.ttf",
+        "/System/Library/Fonts/Supplemental/Impact.ttf",
+        "/System/Library/Fonts/SFNS.ttf",
     ]:
         try:
-            return ImageFont.truetype(name, size)
+            return ImageFont.truetype(path, size)
         except (OSError, IOError):
             continue
     return ImageFont.load_default()
 
 
-def draw_iphone_frame(draw, x, y):
-    """Draw an iPhone frame at position (x, y) top-left corner."""
-    # Phone body (dark titanium)
-    draw.rounded_rectangle(
-        [x, y, x + PHONE_W, y + PHONE_H],
-        radius=PHONE_RADIUS, fill=PHONE_COLOR
-    )
-    # Inner bezel highlight
-    draw.rounded_rectangle(
-        [x + 2, y + 2, x + PHONE_W - 2, y + PHONE_H - 2],
-        radius=PHONE_RADIUS - 2, outline=(55, 55, 58), width=1
-    )
-    # Screen cutout (will be filled by screenshot)
-    draw.rounded_rectangle(
-        [x + BEZEL, y + BEZEL, x + BEZEL + SCREEN_W, y + BEZEL + SCREEN_H],
-        radius=PHONE_RADIUS - BEZEL, fill=(17, 17, 17)
-    )
-    # Dynamic Island
-    island_x = x + (PHONE_W - NOTCH_W) // 2
-    island_y = y + BEZEL + 20
-    draw.rounded_rectangle(
-        [island_x, island_y, island_x + NOTCH_W, island_y + NOTCH_H],
-        radius=NOTCH_RADIUS, fill=NOTCH_COLOR
-    )
-    # Side button (right)
-    draw.rounded_rectangle(
-        [x + PHONE_W - 1, y + 280, x + PHONE_W + 5, y + 380],
-        radius=2, fill=(45, 45, 48)
-    )
-    # Volume buttons (left)
-    draw.rounded_rectangle(
-        [x - 5, y + 250, x + 1, y + 310],
-        radius=2, fill=(45, 45, 48)
-    )
-    draw.rounded_rectangle(
-        [x - 5, y + 330, x + 1, y + 410],
-        radius=2, fill=(45, 45, 48)
-    )
+def get_subtitle_font(size):
+    """Lighter font for subtitles."""
+    for path in [
+        "/System/Library/Fonts/SFNS.ttf",
+        "/System/Library/Fonts/SFCompact.ttf",
+        "/System/Library/Fonts/Supplemental/Arial.ttf",
+    ]:
+        try:
+            return ImageFont.truetype(path, size)
+        except (OSError, IOError):
+            continue
+    return ImageFont.load_default()
 
 
-def paste_screenshot(canvas, screenshot_path, phone_x, phone_y):
-    """Paste a real app screenshot into the phone screen area."""
-    screen_x = phone_x + BEZEL
-    screen_y = phone_y + BEZEL
+# ── Content centering ──
 
-    screenshot = Image.open(screenshot_path).convert("RGBA")
-    # Scale to fit screen area
-    screenshot = screenshot.resize((SCREEN_W, SCREEN_H), Image.LANCZOS)
+def center_screenshot_content(screenshot):
+    """Shift screenshot content to be vertically centered."""
+    arr = np.array(screenshot.convert("RGB"))
+    row_brightness = arr.max(axis=(1, 2))
+    content_rows = np.where(row_brightness > 20)[0]
 
-    # Create rounded mask for the screen
-    mask = Image.new("L", (SCREEN_W, SCREEN_H), 0)
-    mask_draw = ImageDraw.Draw(mask)
-    mask_draw.rounded_rectangle(
-        [0, 0, SCREEN_W, SCREEN_H],
-        radius=PHONE_RADIUS - BEZEL, fill=255
-    )
+    if len(content_rows) == 0:
+        return screenshot
 
-    canvas.paste(screenshot, (screen_x, screen_y), mask)
+    content_top = content_rows[0]
+    content_bottom = content_rows[-1]
+    content_center = (content_top + content_bottom) // 2
+    image_center = arr.shape[0] // 2
+    shift = image_center - content_center
+
+    if abs(shift) < 10:
+        return screenshot
+
+    orig_w, orig_h = screenshot.size
+    centered = Image.new("RGBA", (orig_w, orig_h), (0, 0, 0, 255))
+    if shift > 0:
+        centered.paste(screenshot, (0, shift))
+    else:
+        cropped = screenshot.crop((0, -shift, orig_w, orig_h))
+        centered.paste(cropped, (0, 0))
+    return centered
 
 
-def draw_text_with_shadow(draw, text, xy, font, fill=TEXT_COLOR, shadow_offset=3):
-    """Draw text with a drop shadow for readability."""
+# ── Text drawing ──
+
+def draw_text_with_shadow(draw, text, xy, font, fill=TEXT_COLOR):
+    """Draw text with multi-layer drop shadow."""
     x, y = xy
-    # Shadow
-    draw.text((x + shadow_offset, y + shadow_offset), text, fill=(0, 0, 0, 180), font=font)
-    draw.text((x - 1, y - 1), text, fill=(0, 0, 0, 100), font=font)
-    # Main text
+    draw.text((x + 4, y + 4), text, fill=(0, 0, 0, 160), font=font)
+    draw.text((x + 2, y + 2), text, fill=(0, 0, 0, 200), font=font)
     draw.text((x, y), text, fill=fill, font=font)
 
 
@@ -128,79 +123,100 @@ def draw_centered_text(draw, text, y, font, fill=TEXT_COLOR, canvas_w=OUT_W, sha
         draw_text_with_shadow(draw, text, (x, y), font, fill)
     else:
         draw.text((x, y), text, fill=fill, font=font)
-    return bbox[3] - bbox[1]  # return text height
+    return bbox[3] - bbox[1]
 
 
-def composite_frame(bg_path, screenshot_path, lines, output_path, phone_y_offset=0):
+# ── Main composite ──
+
+def composite_frame(bg_path, screenshot_path, lines, output_path, phone_y_offset=0,
+                    out_w=None, out_h=None, phone_scale=None):
     """
-    Create a complete frame:
-    - Fun background image
-    - iPhone frame with real screenshot
-    - Text overlay
+    Create a marketing frame:
+    - Background image (darkened + blurred)
+    - Real iPhone frame overlay with centered screenshot
+    - Bold text overlay
 
-    lines: list of (text, font_size, color) tuples
+    out_w/out_h: override output dimensions (for iPad etc.)
+    phone_scale: override phone scale fraction (default 0.82 for iPhone, ~0.45 for iPad)
     """
+    ow = out_w or OUT_W
+    oh = out_h or OUT_H
+    ps = phone_scale or PHONE_SCALE
+
+    # Compute phone size for this output
+    pw = int(ow * ps)
+    ph = int(pw * OVERLAY_ORIG_H / OVERLAY_ORIG_W)
+
     # Load and resize background
     bg = Image.open(bg_path).convert("RGBA")
-    bg = bg.resize((OUT_W, OUT_H), Image.LANCZOS)
+    bg = bg.resize((ow, oh), Image.LANCZOS)
 
-    # Darken background slightly so phone pops
-    dark_overlay = Image.new("RGBA", (OUT_W, OUT_H), (0, 0, 0, 100))
-    bg = Image.alpha_composite(bg, dark_overlay)
+    # Darken background
+    dark = Image.new("RGBA", (ow, oh), (0, 0, 0, 110))
+    bg = Image.alpha_composite(bg, dark)
 
-    # Apply slight blur to background so phone is the focus
-    bg_rgb = bg.convert("RGB")
-    bg_rgb = bg_rgb.filter(ImageFilter.GaussianBlur(radius=18))
+    # Blur background
+    bg_rgb = bg.convert("RGB").filter(ImageFilter.GaussianBlur(radius=20))
     canvas = bg_rgb.convert("RGBA")
 
-    # Phone position: centered horizontally, offset vertically
-    phone_x = (OUT_W - PHONE_W) // 2
-    phone_y = 520 + phone_y_offset  # leave room for text at top
+    # Phone position: centered, with vertical offset scaled to output height
+    phone_x = (ow - pw) // 2
+    y_scale = oh / OUT_H
+    phone_y = int((500 + phone_y_offset) * y_scale)
 
-    # Draw phone frame
-    frame_layer = Image.new("RGBA", (OUT_W, OUT_H), (0, 0, 0, 0))
-    frame_draw = ImageDraw.Draw(frame_layer)
+    # Scale the overlay to target size
+    overlay = get_overlay().resize((pw, ph), Image.LANCZOS)
 
-    # Phone shadow
-    shadow_layer = Image.new("RGBA", (OUT_W, OUT_H), (0, 0, 0, 0))
-    shadow_draw = ImageDraw.Draw(shadow_layer)
-    shadow_draw.rounded_rectangle(
-        [phone_x + 8, phone_y + 12, phone_x + PHONE_W + 8, phone_y + PHONE_H + 12],
-        radius=PHONE_RADIUS, fill=(0, 0, 0, 120)
+    # Calculate screen position within the scaled overlay
+    screen_x = phone_x + int(pw * SCREEN_LEFT_FRAC)
+    screen_y = phone_y + int(ph * SCREEN_TOP_FRAC)
+    screen_w = int(pw * (SCREEN_RIGHT_FRAC - SCREEN_LEFT_FRAC))
+    screen_h = int(ph * (SCREEN_BOTTOM_FRAC - SCREEN_TOP_FRAC))
+
+    # Create rounded screen mask
+    screen_radius = int(22 * pw / OVERLAY_ORIG_W)
+    mask = Image.new("L", (screen_w, screen_h), 0)
+    md = ImageDraw.Draw(mask)
+    md.rounded_rectangle([0, 0, screen_w, screen_h], radius=screen_radius, fill=255)
+
+    # Load, center, and resize screenshot
+    screenshot = Image.open(screenshot_path).convert("RGBA")
+    screenshot = center_screenshot_content(screenshot)
+    screenshot = screenshot.resize((screen_w, screen_h), Image.LANCZOS)
+
+    # Drop shadow behind the phone
+    shadow = Image.new("RGBA", (ow, oh), (0, 0, 0, 0))
+    sd = ImageDraw.Draw(shadow)
+    sd.rounded_rectangle(
+        [phone_x + 6, phone_y + 10, phone_x + pw + 6, phone_y + ph + 10],
+        radius=int(62 * pw / OVERLAY_ORIG_W), fill=(0, 0, 0, 150)
     )
-    shadow_layer = shadow_layer.filter(ImageFilter.GaussianBlur(radius=15))
-    canvas = Image.alpha_composite(canvas, shadow_layer)
+    shadow = shadow.filter(ImageFilter.GaussianBlur(radius=22))
+    canvas = Image.alpha_composite(canvas, shadow)
 
-    draw_iphone_frame(frame_draw, phone_x, phone_y)
+    # Paste screenshot into screen area
+    canvas.paste(screenshot, (screen_x, screen_y), mask)
+
+    # Overlay the real iPhone frame on top
+    frame_layer = Image.new("RGBA", (ow, oh), (0, 0, 0, 0))
+    frame_layer.paste(overlay, (phone_x, phone_y), overlay)
     canvas = Image.alpha_composite(canvas, frame_layer)
 
-    # Paste real screenshot
-    paste_screenshot(canvas, screenshot_path, phone_x, phone_y)
-
-    # Redraw Dynamic Island on top of screenshot
-    top_layer = Image.new("RGBA", (OUT_W, OUT_H), (0, 0, 0, 0))
-    top_draw = ImageDraw.Draw(top_layer)
-    island_x = phone_x + (PHONE_W - NOTCH_W) // 2
-    island_y = phone_y + BEZEL + 20
-    top_draw.rounded_rectangle(
-        [island_x, island_y, island_x + NOTCH_W, island_y + NOTCH_H],
-        radius=NOTCH_RADIUS, fill=NOTCH_COLOR
-    )
-    canvas = Image.alpha_composite(canvas, top_layer)
-
-    # Text overlay
-    text_layer = Image.new("RGBA", (OUT_W, OUT_H), (0, 0, 0, 0))
+    # Text overlay — scale font sizes proportionally
+    text_layer = Image.new("RGBA", (ow, oh), (0, 0, 0, 0))
     text_draw = ImageDraw.Draw(text_layer)
+    font_scale = ow / OUT_W
 
-    current_y = 80
-    for text, size, color in lines:
-        font = get_font(size)
-        h = draw_centered_text(text_draw, text, current_y, font, fill=color)
-        current_y += h + 20
+    current_y = int(80 * y_scale)
+    for text, size, color, is_headline in lines:
+        scaled_size = int(size * font_scale)
+        font = get_headline_font(scaled_size) if is_headline else get_subtitle_font(scaled_size)
+        h = draw_centered_text(text_draw, text, current_y, font, fill=color, canvas_w=ow)
+        current_y += h + int(16 * font_scale)
 
     canvas = Image.alpha_composite(canvas, text_layer)
 
-    # Save as RGB
+    # Save
     canvas.convert("RGB").save(output_path, quality=95)
     print(f"  Saved: {output_path}")
 
@@ -208,70 +224,61 @@ def composite_frame(bg_path, screenshot_path, lines, output_path, phone_y_offset
 def main():
     os.makedirs(FRAMES_DIR, exist_ok=True)
 
-    # Frame definitions: (bg_file, screenshot, text_lines, output, phone_y_offset)
+    # lines: (text, font_size, color, is_headline)
     frames = [
-        # Frame 1: Intro
         ("bg01_airport.png", "noseconds.png",
-         [("TOCK", 160, TEXT_COLOR),
-          ("A split-flap clock", 64, SUBTEXT_COLOR),
-          ("that slaps.", 64, SUBTEXT_COLOR)],
+         [("TOCK", 160, TEXT_COLOR, True),
+          ("A split-flap clock", 64, SUBTEXT_COLOR, False),
+          ("that slaps.", 64, SUBTEXT_COLOR, False)],
          "frame01_intro.png", 80),
 
-        # Frame 2: Main clock
         ("bg02_cityscape.png", "noseconds.png",
-         [("YOUR AIRPORT", 96, TEXT_COLOR),
-          ("HAS A CLOCK.", 96, TEXT_COLOR),
-          ("So should your phone.", 56, SUBTEXT_COLOR)],
+         [("YOUR AIRPORT", 96, TEXT_COLOR, True),
+          ("HAS A CLOCK.", 96, TEXT_COLOR, True),
+          ("So should your phone.", 56, SUBTEXT_COLOR, False)],
          "frame02_main_clock.png", 60),
 
-        # Frame 3: Flip animation
         ("bg03_gorilla.png", "noseconds.png",
-         [("MECHANICALLY", 96, TEXT_COLOR),
-          ("SATISFYING.", 96, TEXT_COLOR),
-          ("Digitally obsessive.", 56, SUBTEXT_COLOR)],
+         [("MECHANICALLY", 96, TEXT_COLOR, True),
+          ("SATISFYING.", 96, TEXT_COLOR, True),
+          ("Digitally obsessive.", 56, SUBTEXT_COLOR, False)],
          "frame03_flip.png", 60),
 
-        # Frame 4: World clocks
         ("bg04_worldmap.png", "noseconds.png",
-         [("FIVE TIME", 96, TEXT_COLOR),
-          ("ZONES.", 96, TEXT_COLOR),
-          ("Zero excuses for", 56, SUBTEXT_COLOR),
-          ("missing that call.", 56, SUBTEXT_COLOR)],
+         [("FIVE TIME", 96, TEXT_COLOR, True),
+          ("ZONES.", 96, TEXT_COLOR, True),
+          ("Zero excuses for", 56, SUBTEXT_COLOR, False),
+          ("missing that call.", 56, SUBTEXT_COLOR, False)],
          "frame04_world_clocks.png", 60),
 
-        # Frame 5: Weather
         ("bg05_weather.png", "noseconds.png",
-         [("WEATHER", 110, TEXT_COLOR),
-          ("INCLUDED.", 110, TEXT_COLOR),
-          ("You're welcome.", 56, SUBTEXT_COLOR)],
+         [("WEATHER", 110, TEXT_COLOR, True),
+          ("INCLUDED.", 110, TEXT_COLOR, True),
+          ("You're welcome.", 56, SUBTEXT_COLOR, False)],
          "frame05_weather.png", 60),
 
-        # Frame 6: Settings
         ("bg06_workshop.png", "settings.png",
-         [("YOUR CLOCK,", 96, TEXT_COLOR),
-          ("YOUR RULES.", 96, TEXT_COLOR),
-          ("Add any city. We won't judge.", 48, SUBTEXT_COLOR)],
+         [("YOUR CLOCK,", 96, TEXT_COLOR, True),
+          ("YOUR RULES.", 96, TEXT_COLOR, True),
+          ("Add any city. We won't judge.", 48, SUBTEXT_COLOR, False)],
          "frame06_settings.png", 60),
 
-        # Frame 7: Seconds
         ("bg07_space.png", "withseconds.png",
-         [("SECONDS?", 110, TEXT_COLOR),
-          ("OBVIOUSLY.", 110, TEXT_COLOR),
-          ("For the obsessively punctual.", 52, SUBTEXT_COLOR)],
+         [("SECONDS?", 110, TEXT_COLOR, True),
+          ("OBVIOUSLY.", 110, TEXT_COLOR, True),
+          ("For the obsessively punctual.", 52, SUBTEXT_COLOR, False)],
          "frame07_seconds.png", 60),
 
-        # Frame 8: Full view
         ("bg08_lounge.png", "noseconds.png",
-         [("FREE. NO ADS.", 92, TEXT_COLOR),
-          ("NO TRACKING.", 92, TEXT_COLOR),
-          ("Just vibes.", 56, SUBTEXT_COLOR)],
+         [("FREE. NO ADS.", 92, TEXT_COLOR, True),
+          ("NO TRACKING.", 92, TEXT_COLOR, True),
+          ("Just vibes.", 56, SUBTEXT_COLOR, False)],
          "frame08_free.png", 60),
 
-        # Frame 9: CTA/Outro
         ("bg09_sunset.png", "noseconds.png",
-         [("YOUR CLOCK", 96, TEXT_COLOR),
-          ("IS BORING.", 96, TEXT_COLOR),
-          ("You're not. Fix it.", 64, SUBTEXT_COLOR)],
+         [("YOUR CLOCK", 96, TEXT_COLOR, True),
+          ("IS BORING.", 96, TEXT_COLOR, True),
+          ("You're not. Fix it.", 64, SUBTEXT_COLOR, False)],
          "frame09_outro.png", 60),
     ]
 
